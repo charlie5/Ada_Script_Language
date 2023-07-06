@@ -24,4 +24,4 @@ b__*.adb
 b__*.ads
 compile_commands.json
 .clang-format
-
+gpsauto.cgpr
