@@ -1,5 +1,27 @@
 # Object file
 *.o
 
+
+
 # Ada Library Information
 *.ali
+
+
+
+# Binaries
+applet/asl/asl
+
+
+
+# Other
+*-loc.xml
+*.ads.stderr
+*.ads.stdout
+*.adb.stderr
+*.adb.stdout
+*.bexch
+b__*.adb
+b__*.ads
+compile_commands.json
+.clang-format
+
