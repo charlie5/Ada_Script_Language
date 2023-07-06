@@ -1,2 +1,2 @@
-# ada_script_Language
+# Ada Script Language
 A simple scripting language based on Ada.
