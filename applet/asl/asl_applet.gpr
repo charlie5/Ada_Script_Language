@@ -1,0 +1,27 @@
+with
+     "../../library/asl",
+     "../../library/asl_default";
+
+
+project asl_Applet
+is
+
+   for Source_Dirs     use ("source");
+   for Object_Dir      use "build";
+   for Exec_Dir        use ".";
+   for Main            use ("asl_applet.adb");
+
+
+   package Builder is
+      for Executable  ("asl_applet.adb") use "asl";
+   end Builder;
+
+   package Ide      renames ASL_default.Ide;
+   package Compiler renames ASL_default.Compiler;
+   package Binder   renames ASL_default.Binder;
+
+   package Linker is
+      for Default_Switches ("Ada") use ("-g");
+   end Linker;
+
+end asl_Applet;

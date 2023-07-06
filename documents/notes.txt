@@ -1,0 +1,51 @@
+_______
+General
+~~~~~~~
+
+- The compiler translates ASL to Ada, which can be built with any Ada compiler.
+- A scripts launcher will translate the ASL code into Ada and then build the executable, if required.
+- ASL will be able to 'with' any Ada package.
+- An Ada package will be able to 'with' any ASL package.
+- Performance is not an issue (as with most script languages).
+- Uses 'Object.operation' notation.
+- Except where noted all else is normal Ada code (ie loops, conditionals, tasks, protected types, generics, exceptions, etc).
+
+
+
+_____
+Types
+~~~~~
+
+Core:
+- Glyph        => 'standard.wide_Character'.
+- Text         => 'Ada.Strings.wide_unbounded.wide_unbounded_String'.
+- Integer      => 'standard.long_Integer'.
+- Natural      => 'standard.long_Natural'.
+- Positive     => 'standard.long_Positive'.
+- Real         => 'standard.long_Float'.
+- Enumeration  => Direct Ada equivalent.
+- Boolean      => Direct Ada equivalent.
+- Record       => Direct Ada equivalent.
+- User defined => Direct Ada equivalent.
+
+
+Arrays:
+- Vector or indefinite vector of a core type.
+- Automatically available w/o need for instantiation.
+- Uses 'my_Vector [Index]' syntax for accessing array members.
+- Named by appending an 's' to the discrete type name (Characters, Strings, Integers, etc).
+
+
+Maps:
+- Map or indefinite map of a core type.
+- Automatically available w/o need for instantiation.
+- Uses 'my_Map [Key]' syntax for accessing members.
+- Named by appending a '_Map' to the discrete type name (Character_Map, Integer_Map, my_Record_Map, etc).
+- Map 'Keys' can be of any type (which are converted to an Ada 'wide_String', via the 'Image attribute).
+
+
+
+Classes:
+- 
+- 
+- 
