@@ -6,7 +6,7 @@ General
 - A scripts launcher will translate the ASL code into Ada and then build the executable, if required.
 - ASL will be able to 'with' any Ada package.
 - An Ada package will be able to 'with' any ASL package.
-- Performance is not an issue (as with most script languages).
+- Favour 'ease of use' over 'performance' (as with most script languages).
 - Uses 'Object.operation' notation.
 - Except where noted all else is normal Ada code (ie loops, conditionals, tasks, protected types, generics, exceptions, etc).
 
@@ -18,7 +18,7 @@ Types
 
 Core:
 - Glyph        => 'standard.wide_Character'.
-- Text         => 'Ada.Strings.wide_unbounded.wide_unbounded_String'.
+- Text         => 'lace.Text'.
 - Integer      => 'standard.long_Integer'.
 - Natural      => 'standard.long_Natural'.
 - Positive     => 'standard.long_Positive'.
@@ -44,8 +44,134 @@ Maps:
 - Map 'Keys' can be of any type (which are converted to an Ada 'wide_String', via the 'Image attribute).
 
 
-
 Classes:
+- Active and passive ?
 - 
 - 
-- 
+
+
+
+_____
+Tasks
+~~~~~
+
+- Identical to Ada tasking.
+-
+-
+
+
+____
+Jobs
+~~~~
+
+- Job.Manager.perform;
+-
+-
+
+
+
+______
+Events
+~~~~~~
+
+- Observer.respond;
+- Event.emit;
+- Instant and deferred/safe observers.
+
+
+
+_________________
+Compilation Units
+~~~~~~~~~~~~~~~~~
+
+- Applet: 'hello.applet'
+
+-   State:   Define applet variables, constants and tasks.
+
+-   Open:    Initialisation code.
+
+-   Evolve: Main loop iteration code.
+-     'end when <condition>;'   ~   Can appear anywhere and several times in the evolve code.
+                                ~   If no 'end when' is present, the 'Evolve' code is executed once ony.
+                                
+-     Each iteration calls "job_Manager.perform".
+-     Each iteration calls "Observer.respond" for deferred event responses.
+
+-   Close:   Termination code.
+
+
+
+- Module: 'maths.module'
+-   Public:
+-   Hidden:
+-   Private:
+
+
+
+- Class:  'animal.class'
+-   Forge:
+-   Attributes:
+-   Operations:
+
+
+
+________
+Generics
+~~~~~~~~
+
+- As per Ada.
+
+
+
+_____
+Tools
+~~~~~
+
+asl:
+- Commands
+  - create
+  - release
+  - develop
+  - profile
+  - clean
+  - move
+  - list
+  - publish
+  - sync
+
+asl2ada:
+  - Translates 'asl' source to 'ada' source.
+
+
+
+_______
+Runtime
+~~~~~~~
+
+Asl:
+- Rooted at 'asl.mod'.
+-
+-
+
+Ada:
+- Rooted at 'asl_ada.ads'.
+-
+-
+
+
+
+___________
+Identifiers
+~~~~~~~~~~~
+
+- Consist of letters, numbers and underscores.
+- Must begin with a letter.
+- Are case-insensitive.
+
+
+
+____
+Misc
+~~~~
+
+- Comment token is '--'.
