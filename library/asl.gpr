@@ -22,7 +22,6 @@ is
    package Linker
    is
       for Default_Switches ("ada") use ("-g", 
-                                        "-Es",
                                         "-gnat2022"); 
    end Linker;
 
