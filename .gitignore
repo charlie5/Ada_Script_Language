@@ -20,6 +20,8 @@ applet/asl/asl
 *.adb.stderr
 *.adb.stdout
 *.bexch
+*.lexch
+*.a
 b__*.adb
 b__*.ads
 compile_commands.json
