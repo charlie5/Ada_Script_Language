@@ -2,10 +2,10 @@ _______
 General
 ~~~~~~~
 
-- The compiler translates ASL to Ada, which can be built with any Ada compiler.
-- A scripts launcher will translate the ASL code into Ada and then build the executable, if required.
+- The compiler translates ASL to Ada, which can be built with any Ada 2022 compiler.
+- A scripts launcher will translate the ASL code into Ada, build the executable (if required) and then run the executable.
 - ASL will be able to 'with' any Ada package.
-- An Ada package will be able to 'with' any ASL package.
+- An Ada package will be able to 'with' the translated Ada code of any ASL package.
 - Favour 'ease of use' over 'performance' (as with most script languages).
 - Uses 'Object.operation' notation.
 - Except where noted all else is normal Ada code (ie loops, conditionals, tasks, protected types, generics, exceptions, etc).
@@ -50,6 +50,16 @@ Classes:
 - 
 
 
+_________
+Variables
+~~~~~~~~~
+
+- Identifier : <type_Qualifier> Type < := Initialiser> ;
+- Type qualifiers:
+    - 'constant'
+    - 'persist'
+    - 'access'
+    
 
 _____
 Tasks
@@ -90,7 +100,7 @@ Compilation Units
 
 -   Open:    Initialisation code.
 
--   Evolve: Main loop iteration code.
+-   Do: Main loop iteration code.
 -     'end when <condition>;'   ~   Can appear anywhere and several times in the evolve code.
                                 ~   If no 'end when' is present, the 'Evolve' code is executed once ony.
                                 
@@ -167,6 +177,37 @@ Identifiers
 - Consist of letters, numbers and underscores.
 - Must begin with a letter.
 - Are case-insensitive.
+
+
+
+
+__________
+Exceptions
+~~~~~~~~~~
+
+- May contain data like an Ada 'record'.
+- Use an Ada exception and render the record data as the exceptions message string using JSON.
+- In the handler, create the error record and initialise it by parsing the JSON.
+
+Example:
+
+- error Foo
+  is
+     I : Integer;
+  end error;
+
+
+- raise Foo (I => 5);
+
+
+- exception
+     when Foo =>
+        if Foo.I = 5
+        then
+           <action>;
+        end if;
+
+
 
 
 
