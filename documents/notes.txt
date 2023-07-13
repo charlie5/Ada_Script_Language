@@ -2,7 +2,7 @@ _______
 General
 ~~~~~~~
 
-- The compiler translates ASL to Ada, which can be built with any Ada 2022 compiler.
+- The compiler translates ASL to Ada, which can then be built with any Ada 2022 compiler.
 - A scripts launcher will translate the ASL code into Ada, build the executable (if required) and then run the executable.
 - ASL will be able to 'with' any Ada package.
 - An Ada package will be able to 'with' the translated Ada code of any ASL package.
