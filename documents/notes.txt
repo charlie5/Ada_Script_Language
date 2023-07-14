@@ -2,7 +2,7 @@ _______
 General
 ~~~~~~~
 
-- The compiler translates ASL to Ada, which can then be built with any Ada 2022 compiler.
+- The 'compiler' translates ASL to Ada, which can then be built with any Ada 2022 compiler.
 - A scripts launcher will translate the ASL code into Ada, build the executable (if required) and then run the executable.
 - ASL will be able to 'with' any Ada package.
 - An Ada package will be able to 'with' the translated Ada code of any ASL package.
@@ -12,17 +12,28 @@ General
 
 
 
+
 _____
 Types
 ~~~~~
 
 Core:
-- Glyph        => 'standard.wide_Character'.
+- Character    => 'standard.Character'.
+- String       => 'standard.String'.
+
+- Glyph        => 'standard.Character'.
 - Text         => 'lace.Text'.
-- Integer      => 'standard.long_Integer'.
-- Natural      => 'standard.long_Natural'.
-- Positive     => 'standard.long_Positive'.
+
+- wide_Glyph   => 'standard.wide_Character'.
+- wide_Text    => 'lace.wide_Text'.
+
+- Integer      => 'standard.Integer'.
+- Natural      => 'standard.Natural'.
+- Positive     => 'standard.Positive'.
+
+- Float        => 'standard.Float'.
 - Real         => 'standard.long_Float'.
+
 - Enumeration  => Direct Ada equivalent.
 - Boolean      => Direct Ada equivalent.
 - Record       => Direct Ada equivalent.
@@ -41,7 +52,7 @@ Maps:
 - Automatically available w/o need for instantiation.
 - Uses 'my_Map [Key]' syntax for accessing members.
 - Named by appending a '_Map' to the discrete type name (Character_Map, Integer_Map, my_Record_Map, etc).
-- Map 'Keys' can be of any type (which are converted to an Ada 'wide_String', via the 'Image attribute).
+- Map 'Keys' can be of any type (which are converted to an Ada 'String', via the 'Image attribute).
 
 
 Classes:
@@ -50,16 +61,20 @@ Classes:
 - 
 
 
+
+
 _________
 Variables
 ~~~~~~~~~
 
-- Identifier : <type_Qualifier> Type < := Initialiser> ;
+- Identifier : <type_Qualifier> Type <:= Initialiser>;
 - Type qualifiers:
     - 'constant'
     - 'persist'
     - 'access'
     
+
+
 
 _____
 Tasks
@@ -70,6 +85,7 @@ Tasks
 -
 
 
+
 ____
 Jobs
 ~~~~
@@ -77,6 +93,7 @@ Jobs
 - Job.Manager.perform;
 -
 -
+
 
 
 
@@ -90,31 +107,23 @@ Events
 
 
 
+
 _________________
 Compilation Units
 ~~~~~~~~~~~~~~~~~
 
 - Applet: 'hello.applet'
 
--   State:   Define applet variables, constants and tasks.
+-   open:    Initialisation code. Optional.
 
--   Open:    Initialisation code.
-
--   Do: Main loop iteration code.
+-   do: Main loop iteration code.
 -     'end when <condition>;'   ~   Can appear anywhere and several times in the evolve code.
                                 ~   If no 'end when' is present, the 'Evolve' code is executed once ony.
                                 
 -     Each iteration calls "job_Manager.perform".
 -     Each iteration calls "Observer.respond" for deferred event responses.
 
--   Close:   Termination code.
-
-
-
-- Module: 'maths.module'
--   Public:
--   Hidden:
--   Private:
+-   close:   Termination code. Optional.
 
 
 
@@ -125,11 +134,25 @@ Compilation Units
 
 
 
+- Module: 'maths.module'
+-   Public:
+-   Hidden:
+-   Private:
+
+
+
+- Package: 'gui.ads' 'gui.adb'
+-   A standard Ada package.
+
+
+
+
 ________
 Generics
 ~~~~~~~~
 
 - As per Ada.
+
 
 
 
@@ -154,12 +177,16 @@ asl2ada:
 
 
 
+
 _______
 Runtime
 ~~~~~~~
 
+- Hosted as a Github (?) project.
+
+
 Asl:
-- Rooted at 'asl.mod'.
+- Rooted at 'asl.module'.
 -
 -
 
@@ -167,6 +194,7 @@ Ada:
 - Rooted at 'asl_ada.ads'.
 -
 -
+
 
 
 
@@ -188,6 +216,7 @@ Exceptions
 - May contain data like an Ada 'record'.
 - Use an Ada exception and render the record data as the exceptions message string using JSON.
 - In the handler, create the error record and initialise it by parsing the JSON.
+- Or, instead of JSON, use unchecked_Conversion from error type to String, in the raise, and back again in the handler.
 
 Example:
 
@@ -210,9 +239,51 @@ Example:
 
 
 
+_____
+Loops
+~~~~~
+
+- 'skip when <condition>' ~ Equivalent to C's 'continue'.
+
+
+
 
 ____
 Misc
 ~~~~
 
 - Comment token is '--'.
+
+
+
+
+_____________
+Introspection
+~~~~~~~~~~~~~
+
+- How to provide introspection.
+-
+-
+
+
+
+
+______
+Remote
+~~~~~~
+
+- How to incorporate DSA ?
+-
+-
+
+
+
+
+______
+aslIDE
+~~~~~~
+
+- Project manager.
+- Source editor.
+- Debugger.
+- Profiler.
