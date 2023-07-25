@@ -1,3 +1,4 @@
+private
 with
      lace.wide_Text;
 
