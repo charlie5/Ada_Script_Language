@@ -307,49 +307,45 @@ is
 
 
 
-   null_Text : constant Item := (Data => null);
-
-
    b  : constant :=     1;
    kb : constant := 1_024;
    mb : constant := 1_024 * kb;
 
 
-   function to_Text (Capacity : in Natural := 0) return Item
+   function to_Text (Size : in Natural := 0) return Item
    is
       Result : Item;
    begin
-      if    Capacity  =   0*b  then   return null_Text;
-      elsif Capacity  =   1*b  then   Result := (Data => lace_Text_view (Text_1   .new_Item));
-      elsif Capacity  =   2*b  then   Result := (Data => lace_Text_view (Text_2   .new_Item));
-      elsif Capacity <=   4*b  then   Result := (Data => lace_Text_view (Text_4   .new_Item));
-      elsif Capacity <=   8*b  then   Result := (Data => lace_Text_view (Text_8   .new_Item));
-      elsif Capacity <=  16*b  then   Result := (Data => lace_Text_view (Text_16  .new_Item));
-      elsif Capacity <=  32*b  then   Result := (Data => lace_Text_view (Text_32  .new_Item));
-      elsif Capacity <=  64*b  then   Result := (Data => lace_Text_view (Text_64  .new_Item));
-      elsif Capacity <= 128*b  then   Result := (Data => lace_Text_view (Text_128 .new_Item));
-      elsif Capacity <= 256*b  then   Result := (Data => lace_Text_view (Text_256 .new_Item));
-      elsif Capacity <= 512*b  then   Result := (Data => lace_Text_view (Text_512 .new_Item));
-      elsif Capacity <=   1*kb then   Result := (Data => lace_Text_view (Text_1k  .new_Item));
-      elsif Capacity <=   2*kb then   Result := (Data => lace_Text_view (Text_2k  .new_Item));
-      elsif Capacity <=   4*kb then   Result := (Data => lace_Text_view (Text_4k  .new_Item));
-      elsif Capacity <=   8*kb then   Result := (Data => lace_Text_view (Text_8k  .new_Item));
-      elsif Capacity <=  16*kb then   Result := (Data => lace_Text_view (Text_16k .new_Item));
-      elsif Capacity <=  32*kb then   Result := (Data => lace_Text_view (Text_32k .new_Item));
-      elsif Capacity <=  64*kb then   Result := (Data => lace_Text_view (Text_64k .new_Item));
-      elsif Capacity <= 128*kb then   Result := (Data => lace_Text_view (Text_128k.new_Item));
-      elsif Capacity <= 256*kb then   Result := (Data => lace_Text_view (Text_256k.new_Item));
-      elsif Capacity <= 512*kb then   Result := (Data => lace_Text_view (Text_512k.new_Item));
-      elsif Capacity <=   1*mb then   Result := (Data => lace_Text_view (Text_1m  .new_Item));
-      elsif Capacity <=   2*mb then   Result := (Data => lace_Text_view (Text_2m  .new_Item));
-      elsif Capacity <=   4*mb then   Result := (Data => lace_Text_view (Text_4m  .new_Item));
-      elsif Capacity <=   8*mb then   Result := (Data => lace_Text_view (Text_8m  .new_Item));
-      elsif Capacity <=  16*mb then   Result := (Data => lace_Text_view (Text_16m .new_Item));
-      elsif Capacity <=  32*mb then   Result := (Data => lace_Text_view (Text_32m .new_Item));
-      elsif Capacity <=  64*mb then   Result := (Data => lace_Text_view (Text_64m .new_Item));
-      elsif Capacity <= 128*mb then   Result := (Data => lace_Text_view (Text_128m.new_Item));
-      elsif Capacity <= 256*mb then   Result := (Data => lace_Text_view (Text_256m.new_Item));
-      elsif Capacity <= 512*mb then   Result := (Data => lace_Text_view (Text_512m.new_Item));
+      if    Size <=   1*b  then   Result := (Data => lace_Text_view (Text_1   .new_Item));
+      elsif Size  =   2*b  then   Result := (Data => lace_Text_view (Text_2   .new_Item));
+      elsif Size <=   4*b  then   Result := (Data => lace_Text_view (Text_4   .new_Item));
+      elsif Size <=   8*b  then   Result := (Data => lace_Text_view (Text_8   .new_Item));
+      elsif Size <=  16*b  then   Result := (Data => lace_Text_view (Text_16  .new_Item));
+      elsif Size <=  32*b  then   Result := (Data => lace_Text_view (Text_32  .new_Item));
+      elsif Size <=  64*b  then   Result := (Data => lace_Text_view (Text_64  .new_Item));
+      elsif Size <= 128*b  then   Result := (Data => lace_Text_view (Text_128 .new_Item));
+      elsif Size <= 256*b  then   Result := (Data => lace_Text_view (Text_256 .new_Item));
+      elsif Size <= 512*b  then   Result := (Data => lace_Text_view (Text_512 .new_Item));
+      elsif Size <=   1*kb then   Result := (Data => lace_Text_view (Text_1k  .new_Item));
+      elsif Size <=   2*kb then   Result := (Data => lace_Text_view (Text_2k  .new_Item));
+      elsif Size <=   4*kb then   Result := (Data => lace_Text_view (Text_4k  .new_Item));
+      elsif Size <=   8*kb then   Result := (Data => lace_Text_view (Text_8k  .new_Item));
+      elsif Size <=  16*kb then   Result := (Data => lace_Text_view (Text_16k .new_Item));
+      elsif Size <=  32*kb then   Result := (Data => lace_Text_view (Text_32k .new_Item));
+      elsif Size <=  64*kb then   Result := (Data => lace_Text_view (Text_64k .new_Item));
+      elsif Size <= 128*kb then   Result := (Data => lace_Text_view (Text_128k.new_Item));
+      elsif Size <= 256*kb then   Result := (Data => lace_Text_view (Text_256k.new_Item));
+      elsif Size <= 512*kb then   Result := (Data => lace_Text_view (Text_512k.new_Item));
+      elsif Size <=   1*mb then   Result := (Data => lace_Text_view (Text_1m  .new_Item));
+      elsif Size <=   2*mb then   Result := (Data => lace_Text_view (Text_2m  .new_Item));
+      elsif Size <=   4*mb then   Result := (Data => lace_Text_view (Text_4m  .new_Item));
+      elsif Size <=   8*mb then   Result := (Data => lace_Text_view (Text_8m  .new_Item));
+      elsif Size <=  16*mb then   Result := (Data => lace_Text_view (Text_16m .new_Item));
+      elsif Size <=  32*mb then   Result := (Data => lace_Text_view (Text_32m .new_Item));
+      elsif Size <=  64*mb then   Result := (Data => lace_Text_view (Text_64m .new_Item));
+      elsif Size <= 128*mb then   Result := (Data => lace_Text_view (Text_128m.new_Item));
+      elsif Size <= 256*mb then   Result := (Data => lace_Text_view (Text_256m.new_Item));
+      elsif Size <= 512*mb then   Result := (Data => lace_Text_view (Text_512m.new_Item));
       end if;
 
       return Result;

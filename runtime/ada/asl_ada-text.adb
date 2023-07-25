@@ -7,7 +7,7 @@ is
 
    function to_Text (From : in wide_String := "") return Item
    is
-      Result : constant Item := Pools.to_Text (Capacity => From'Length);
+      Result : constant Item := Pools.to_Text (Size => From'Length);
    begin
       lace_Text.String_is (Result.Data.all, now => From);
 
