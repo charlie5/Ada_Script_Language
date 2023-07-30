@@ -69,9 +69,10 @@ Variables
 
 - Identifier : <type_Qualifier> Type <:= Initialiser>;
 - Type qualifiers:
-    - 'constant'
-    - 'persist'
-    - 'access'
+    - 'constant'  ~ As per Ada.
+    - 'persist'   ~ Values are retained across runs.
+    - 'access'    ~ As per Ada.
+    - 'safe'      ~ Implemented as atomic or protected types.
     
 
 
@@ -114,11 +115,13 @@ Compilation Units
 
 - Applet: 'hello.applet'
 
+-   Can have typed parameters, initialised via 'ada.command_Line'.
+
 -   open:    Initialisation code. Optional.
 
 -   do: Main loop iteration code.
--     'end when <condition>;'   ~   Can appear anywhere and several times in the evolve code.
-                                ~   If no 'end when' is present, the 'Evolve' code is executed once ony.
+-     'end when <condition>;'   ~   Can appear anywhere and several times in the 'do' region.
+                                ~   If no 'end when' is present, the 'do' code is executed once only.
                                 
 -     Each iteration calls "job_Manager.perform".
 -     Each iteration calls "Observer.respond" for deferred event responses.
@@ -126,11 +129,18 @@ Compilation Units
 -   close:   Termination code. Optional.
 
 
+- Uses a package named '<applet_name>_applet.ads' which contains all the declarations and code.
+- The package contains the 'open:' code in the package elaboration region and a 'closure' controlled type for 'close:'.
+- Launcher simply 'with's the package and calls 'launch' procedure.
+
+
 
 - Class:  'animal.class'
 -   Forge:
 -   Attributes:
 -   Operations:
+-   open:          Translates to the procedural section at the end of an Ada package body. Optional.
+-   close:         Translates to the 'Finalise' procedure of a controlled type. Optional.
 
 
 
@@ -138,6 +148,8 @@ Compilation Units
 -   Public:
 -   Hidden:
 -   Private:
+-   open:          Translates to the procedural section at the end of an Ada package body. Optional.
+-   close:         Translates to the 'Finalise' procedure of a controlled type. Optional.
 
 
 
@@ -173,7 +185,7 @@ asl:
   - sync
 
 asl2ada:
-  - Translates 'asl' source to 'ada' source.
+  - Translates 'asl' source into 'ada' source.
 
 
 
@@ -205,6 +217,9 @@ Identifiers
 - Consist of letters, numbers and underscores.
 - Must begin with a letter.
 - Are case-insensitive.
+- Preferred casing: - Nouns and plurals are capitalised
+                    - Verbs, adverbs and adjectives are all lowercase.
+                    - Top level namespace and acronym casing are at the users discretion.
 
 
 
@@ -217,6 +232,7 @@ Exceptions
 - Use an Ada exception and render the record data as the exceptions message string using JSON.
 - In the handler, create the error record and initialise it by parsing the JSON.
 - Or, instead of JSON, use unchecked_Conversion from error type to String, in the raise, and back again in the handler.
+
 
 Example:
 
@@ -261,7 +277,7 @@ _____________
 Introspection
 ~~~~~~~~~~~~~
 
-- How to provide introspection.
+- How to provide introspection ?
 -
 -
 
@@ -280,10 +296,33 @@ Remote
 
 
 ______
-aslIDE
+aslIde
 ~~~~~~
 
 - Project manager.
 - Source editor.
 - Debugger.
 - Profiler.
+
+
+
+
+__________
+Versioning
+~~~~~~~~~~
+
+- Official libraries will not be versioned.
+- Each new release of ASL will not be published until all official libraries are consistent.
+
+
+
+
+__________________
+Official Libraries
+~~~~~~~~~~~~~~~~~~
+
+- asl.Web
+- asl.OS
+- asl.GUI
+- asl.Math
+- asl.?
