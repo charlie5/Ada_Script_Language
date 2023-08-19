@@ -353,7 +353,7 @@ Misc
 - Comment token is '--'.
 - '~=' is used to denote case insensitive equality for Text and Strings.
 - Swap assignment:   A, B, C := C, A, B;
-- Parameters for 'applet'.
+- Parameterised 'Image attributes.
 
 
 
