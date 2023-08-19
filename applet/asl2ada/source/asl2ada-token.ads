@@ -1,6 +1,7 @@
 with
      asl2ada.Lexeme,
-     ada.Strings.unbounded;
+     ada.Strings.unbounded,
+     ada.Containers.Vectors;
 
 
 package asl2ada.Token
@@ -29,15 +30,15 @@ is
                  case_Token,
                  character_literal_Token,
                  class_Token,
-                 close_Token,      -- 'close:'
+                 --  asl_close_Token,      -- 'close:'
                  comment_Token,
                  constant_Token,
                  declare_Token,
                  delay_Token,
                  delta_Token,
                  digits_Token,
-                 ada_do_Token,
-                 asl_do_Token,     -- 'do:'
+                 do_Token,
+                 --  asl_do_Token,     -- 'do:'
                  else_Token,
                  elsif_Token,
                  end_Token,
@@ -63,7 +64,7 @@ is
                  not_Token,
                  null_Token,
                  of_Token,
-                 open_Token,       -- 'open:'
+                 --  asl_open_Token,       -- 'open:'
                  or_Token,
                  others_Token,
                  out_Token,
@@ -171,7 +172,8 @@ is
       end record;
 
 
-   type Items is array (Positive range <>) of Item;
+   package Vectors is new ada.Containers.Vectors (Positive, Item);
+   subtype Vector  is Vectors.Vector;
 
 
 end asl2ada.Token;

@@ -1,0 +1,24 @@
+with
+     "../../library/asl",
+     "../../library/asl_default";
+
+
+project Asl2Ada
+is
+
+   for Source_Dirs     use ("source");
+   for Object_Dir      use "build";
+   for Exec_Dir        use ".";
+   for Main            use ("asl2ada-launcher.adb");
+
+
+   package Builder is
+      for Executable  ("asl2ada-launcher.adb") use "asl2ada";
+   end Builder;
+   
+   package Ide      renames ASL_default.Ide;
+   package Compiler renames ASL_default.Compiler;
+   package Binder   renames ASL_default.Binder;
+   package Linker   renames ASL.Linker;
+   
+end Asl2Ada;

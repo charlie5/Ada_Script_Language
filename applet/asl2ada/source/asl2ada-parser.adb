@@ -1,81 +1,77 @@
 with
-     asl2ada.Unit.asl_Applet,
-     lace.Text.Cursor,
+     asl2ada.Model.Unit.asl_Applet,
+     asl2ada.Model.Call,
+     asl2ada.Model.Expression,
+     asl2ada.Model.Statement.call,
+     asl2ada.Model.Statement.for_loop,
+     asl2ada.Model.Statement.a_null,
+     asl2ada.Lexer,
+     asl2ada.Token,
+     asl2ada.Error,
 
      ada.Characters.handling,
-     --  ada.Characters.latin_1,
-     ada.Strings.fixed,
-     ada.Strings.Maps
-     --  ada.Strings.unbounded,
-     --  ada.Text_IO
-;
+     ada.Strings.unbounded;
 
 
 package body asl2ada.Parser
 is
-   --  use ada.Strings.unbounded,
+   use ada.Strings.unbounded;
        --  ada.Strings.fixed;
 
 
    --  function "+" (From : in String) return unbounded_String
    --                renames to_unbounded_String;
    --
-   --  function "+" (From : in unbounded_String) return String
-   --                renames to_String;
+   function "+" (From : in unbounded_String) return String
+                 renames to_String;
 
 
-   function parse_Context (Source : in String;   Errors_found : in out Boolean) return Unit.context_Clauses
+
+
+
+   function parse_Context (Tokens : in out Token.vector;   Errors_found : in out Boolean) return Model.Unit.context_Clauses
    is
-      use ada.Strings.fixed;
-
-      Result : Unit.context_Clauses;
+      use Token;
+      Result : Model.Unit.context_Clauses;
    begin
-      --  log ("'" & context_Source & "'" );
+      Outer:
+      loop
+         if Tokens (1).Kind = identifier_Token
+         then
+            declare
+               withed_unit_Name : unbounded_String;
+            begin
+               loop
+                  append (withed_unit_Name, Tokens (1).Identifier);
+                  Tokens.delete_First;
 
-      if    Source'Length /= 0
-        and Source        /= Source'Length * NL     -- Ignore if source is all new lines characters.
-      then
-         declare
-            with_Index               : constant Natural := Index (Source, "with");
-            semicolon_Index          : constant Natural := Index (Source, ";");
+                  if Tokens (1).Kind = dot_Token
+                  then
+                     append (withed_unit_Name, ".");
+                     Tokens.delete_First;
 
-            with_Token_detected      : constant Boolean := with_Index      /= 0;
-            semicolon_Token_detected : constant Boolean := semicolon_Index /= 0;
-         begin
-            if not with_Token_detected
-            then
-               log ("Token 'with' not found.");
-               Errors_found := True;
+                  elsif Tokens (1).Kind = comma_Token
+                  then
+                     Tokens.delete_First;
+                     exit;
 
-            elsif not semicolon_Token_detected
-            then
-               log ("Token ';' not found in the context region.");
-               Errors_found := True;
+                  elsif Tokens (1).Kind = semicolon_Token
+                  then
+                     Result.Withs.append (to_String (withed_unit_Name));
+                     Tokens.delete_First;
+                     exit Outer;
+                  end if;
 
-            else
-               declare
-                  use lace.Text.Cursor;
+               end loop;
 
-                  context_Text   : aliased lace.Text.item              := lace.Text.to_Text (Source (        with_Index + 5
-                                                                                                     .. semicolon_Index - 1));
-                  context_Cursor :         lace.Text.Cursor.item       := First (context_Text'Access);
-               begin
-                  while context_Cursor.has_Element
-                  loop
-                     declare
-                        use ada.Strings.Maps;
-                        withed_Unit : constant String := context_Cursor.next_Token (',', trim => True);     --TODO: 'trim' doesn't work.
-                     begin
-                        Result.Withs.append (trim (withed_Unit, Left  => to_Set (" " & NL),
-                                                                Right => to_Set (" " & NL)));
-                     end;
-                  end loop;
+               Result.Withs.append (to_String (withed_unit_Name));
+            end;
 
-                  --  log (Result'Image);
-               end;
-            end if;
-         end;
-      end if;
+         else
+            Errors_found := True;
+            exit Outer;
+         end if;
+      end loop Outer;
 
 
       return Result;
@@ -84,87 +80,412 @@ is
 
 
 
-   function parse_Applet (Source : in String;   unit_Name : in String) return asl2ada.Unit.view
+
+   function parse_Expression (From : in Token.vector;   i : in out Positive) return model.Expression.view
    is
-      use ada.Strings.fixed,
-          ada.Characters.handling;
+      Tokens :          Token.vector     renames From;
+      Result : constant model.Expression.view := new model.Expression.item;
 
-      applet_Token_detected : constant Boolean := Index (to_Lower (Source),  to_Lower ("applet " & unit_Name))       /= 0;
-      do_Token_detected     : constant Boolean := Index (          Source,             "do:")                        /= 0;
-      end_Token_detected    : constant Boolean := Index (to_Lower (Source),  to_Lower ("end "    & unit_Name & ";")) /= 0;
+      use asl2ada.Token;
 
-      Errors_found : Boolean := False;
+
+      function Current return Token.item
+      is
+      begin
+         return Tokens (i);
+      end Current;
+
 
    begin
-      if not applet_Token_detected then   log ("Token 'applet " & unit_Name & "' not found.");      Errors_found := True;   end if;
-      if not do_Token_detected     then   log ("Token 'do:' not found.");                           Errors_found := True;   end if;
-      if not end_Token_detected    then   log ("Token 'end "    & unit_Name & ";' not found.");     Errors_found := True;   end if;
+      while i <= Integer (Tokens.Length)
+      loop
+         exit when    Current.Kind = comma_Token
+                   or Current.Kind = right_parenthesis_Token;
 
-      if Errors_found
-      then
-         return null;
-      end if;
+         Result.add (Token => Current);
+         i := i + 1;
+      end loop;
+
+      return Result;
+   end parse_Expression;
 
 
-      declare
-         Result : constant asl2ada.Unit.view := new asl2ada.Unit.asl_Applet.item;
-      begin
-         Result.Name_is (unit_Name);
+
+
+
+   function parse_Statements (From : in Token.vector;   i : in out Positive) return model.Statement.vector
+   is
+      Tokens : Token.vector renames From;
+      Result : model.Statement.vector;
+
+   begin
+      while i <= Integer (Tokens.Length)
+      loop
+         dlog ("parser:124 ~ " & Tokens (i).Kind'Image);
 
          declare
-            use lace.Text.Cursor;
+            use asl2ada.Token;
 
-            source_Text   : aliased lace.Text.item        := lace.Text.to_Text (Source);
-            source_Cursor :         lace.Text.Cursor.item := First (source_Text'Access);
 
-         begin
-            add_Context:
-            declare
-               context_Source : constant String               := source_Cursor.next_Token (Delimiter  => "applet " & unit_Name,
-                                                                                           match_Case => False,
-                                                                                           Trim       => True);
-               the_Context    : constant Unit.context_Clauses := parse_Context (context_Source, Errors_found);
+            function Current return Token.item
+            is
             begin
-               if Errors_found
+               return Tokens (i);
+            end Current;
+
+
+            function Next (Offset : in Positive := 1) return Token.item
+            is
+               Result : Token.item;
+            begin
+               if i + Offset <= Integer (Tokens.Length)
                then
-                  return null;
-               else
-                  Result.Context_is (the_Context);
+                  Result := Tokens (i + Offset);
                end if;
 
-               --  log (Result.all'Image);
-            end add_Context;
+               return Result;
+            end Next;
 
 
-            add_Declarations:
-            declare
-               Declarations : String := source_Cursor.next_Token (Delimiter  => "do:",
-                                                                  match_Case => False,
-                                                                  Trim       => True);
-            begin
-               null;
-            end add_Declarations;
+         begin
+            if Current.Kind = identifier_Token
+            then
+               declare
+                  use Model.Statement.Call.Forge;
+                  Call : Model.Statement.Call.view := new_Call_Statement (Name => +Current.Identifier);
+               begin
+                  i := i + 1;
+
+                  if Current.Kind = left_parenthesis_Token
+                  then               -- Parse arguments.
+                     i := i + 1;     -- Skip left parenthesis.
+
+                     loop
+                        if Current.Kind /= comma_Token
+                        then
+                           --  dlog ("add arg");
+
+                           Call.add_Argument (parse_Expression (From => Tokens, i => i));
+
+                           --  if Current.Kind = string_literal_Token
+                           --  then
+                           --     Call.add_Argument ('"' & (+Current.string_Value) & '"');
+                           --
+                           --  else
+                           --     Call.add_Argument (+Current.Lexeme.Text);
+                           --  end if;
+                        end if;
+
+                        --  i := i + 1;
+                        exit when Current.Kind = right_parenthesis_Token;
+                        i := i + 1;     -- Skip ';' token.
+                     end loop;
+                  end if;
+
+                  i := i + 1;     -- Skip right parenthesis.
+                  i := i + 1;     -- Skip semicolon.
+
+                  --  dlog ("Adding 'call' statement.");
+                  --  dlog (Call.all'Image);
+                  Result.append (Model.Statement.view (Call));
+               end;
 
 
-            add_Statements:
-            declare
-               Statements : String := source_Cursor.next_Token (Delimiter  => NL & "end " & unit_Name,
-                                                                match_Case => False,
-                                                                Trim       => True);
-            begin
-               null;
-            end add_Statements;
+            elsif Current.Kind = for_Token
+            then
+               declare
+                  use Model.Statement.for_loop.Forge;
+                  for_Statement   : model.Statement.for_loop.view := new_for_loop_Statement (Variable => +Next.Identifier);
+                  loop_Statements : model.Statement.vector;
+               begin
+                  i := i + 3;     -- Skip 'for', 'identifier' and 'in' tokens.
+                  --  dlog ("159:" & Current.Kind'Image);
+                  for_Statement.Lower_is (+Current.Lexeme.Text);
+
+                  i := i + 2;     -- Skip 'lower' and '..' tokens.
+                  for_Statement.Upper_is (+Current.Lexeme.Text);
+
+                  i := i + 2;     -- Skip 'loop' token.
+
+                  loop_Statements := parse_Statements (Tokens, i);     -- Recurse.
+                  for_Statement.Statements_are (loop_Statements);
+
+                  --  dlog ("my Adding 'for_loop' statement.");
+                  Result.append (Model.Statement.view (for_Statement));
+
+                  -- i := i + 1;     -- Skip 'end', 'loop' and ';' tokens.
+               end;
+
+
+            elsif Current.Kind = null_Token
+            then
+               dlog ("Null token ~ i:" & i'Image);
+               declare
+                  use Model.Statement.a_null.Forge;
+                  null_Statement : model.Statement.a_null.view := new_null_Statement;
+               begin
+                  i := i + 2;     -- Skip 'null' and ';' tokens.
+                  Result.append (Model.Statement.view (null_Statement));
+               end;
+
+
+            elsif Current.Kind = end_Token
+            then
+               --  dlog ("END KKK");
+               declare
+               begin
+                  i := i + 3;     -- Skip 'null' and ';' tokens.
+                  exit;
+               end;
+
+
+            else
+               declare
+                  Statement : Model.Statement.view := new Model.Statement.item;
+               begin
+                  while Current.Kind /= semicolon_Token
+                  loop
+                     Statement.add (Current.Lexeme);
+                     i := i + 1;
+                  end loop;
+
+                  Result.append (Statement);
+               end;
+            end if;
          end;
 
+         --  i := i + 1;
+         dlog ("i:" & i'Image);
+      end loop;
 
-         return Result;
-      end;
+
+      return Result;
+   end parse_Statements;
+
+
+
+
+   function parse_Applet (Source : in String;   unit_Name : in String) return asl2ada.Model.Unit.view
+   is
+      use asl2ada.Token,
+          asl2ada.Lexer,
+          ada.Characters.handling;
+
+      use type ada.Containers.Count_type;
+
+      Errors        :          asl2ada.Error.items;
+      Errors_found  :          Boolean                            := False;
+      Tokens        :          Token.vector                       := Lexer.to_Tokens (Source, Errors);
+      applet_Tokens :          Lexer.applet_Tokens                := Lexer.to_applet_Tokens (Tokens, unit_Name);
+      Result        : constant asl2ada.Model.Unit.asl_Applet.view := new asl2ada.Model.Unit.asl_Applet.item;
+
+   begin
+      dlog (applet_Tokens'Image);
+
+
+      -- log;
+      -- log ("Source:");
+      -- log;
+      -- log (Source);
+      -- log;
+
+      --  log;
+      --  log ("Tokens:");
+      --  log;
+      --  log (Tokens'Image);
+      --  log; log;
+
+      --  log;
+      --  log ("Token tree:");
+      --  log;
+      --  log (Tree'Image);
+      --  log; log;
+
+
+
+      --  log ("Top level kids");
+      --  log;
+      --
+      --  for Each of Tree.Root.Children
+      --  loop
+      --     log (Each.Value'Image);
+      --  end loop;
+      --
+      --
+      --  log; log; log;
+      --  log ("Top level kids 2");
+      --  log;
+      --
+      --  for Each of Tree.Root.Children
+      --  loop
+      --     for Child of Each.Children
+      --     loop
+      --        log (Child.Value'Image);
+      --     end loop;
+      --  end loop;
+
+
+      --  parse_the_Context:
+      --  begin
+      --     if Tokens (1).Kind = with_Token
+      --     then
+      --        Tokens.delete_First;
+      --
+      --        add_Context:
+      --        declare
+      --           the_Context : constant Unit.context_Clauses := parse_Context (Tokens, Errors_found);
+      --        begin
+      --           if Errors_found
+      --           then
+      --              log ("Errors found!");
+      --              return null;
+      --           else
+      --              Result.Context_is (the_Context);
+      --           end if;
+      --        end add_Context;
+      --     end if;
+      --  end parse_the_Context;
+
+
+      parse_the_Applet_Name:
+      begin
+         --  if Tokens (1).Kind = applet_Token
+         --  then
+         --     Tokens.delete_First;
+         --
+         --     if Tokens (1).Kind = identifier_Token
+         --     then
+         --        if   to_Lower (+Tokens (1).Identifier)
+         --          /= to_Lower ( unit_Name)
+         --        then
+         --           log ("Error: Applet name does not match unit name. Should be " & unit_Name & ".");
+         --           return null;
+         --        end if;
+
+               Result.Name_is (unit_Name);    -- to_String (Tokens (1).Identifier));
+               --  Tokens.delete_First;
+
+            --  else
+            --     log ("Error: Missing applet name. Should be " & unit_Name & ".");
+            --     return null;
+            --  end if;
+         --  end if;
+      end parse_the_Applet_Name;
+
+
+      --  if Tokens (1).Kind = is_Token
+      --  then
+      --     Tokens.delete_First;
+      --  else
+      --     log ("Error: Missing 'is' token.");
+      --     return null;
+      --  end if;
+
+
+      --  add_Declarations:
+      --  declare
+      --     --  Declarations : String := source_Cursor.next_Token (Delimiter  => "do:",
+      --     --                                                     match_Case => False,
+      --     --                                                     Trim       => True);
+      --  begin
+      --     null;
+      --  end add_Declarations;
+
+
+      --  if Tokens (1).Kind = asl_do_Token
+      --  then
+      --     Tokens.delete_First;
+      --  else
+      --     log ("Error: Missing 'do:' token.");
+      --     return null;
+      --  end if;
+
+
+      --  declare
+      --     do_Tree : token_Tree := to_token_Tree (applet_Tokens.do_Block);
+      --  begin
+      --     --  log (5);
+      --     log ("do Tree");
+      --     log (do_Tree'Image);
+      --     log (1);
+      --  end;
+
+
+      parse_do_Block:
+      declare
+         --  do_Block   :
+         Tokens     : Token.vector renames applet_Tokens.do_Block;
+         Statements : Model.Statement.vector;
+         i          : Positive := 1;
+      begin
+         --  log (Tokens.Length'Image);
+
+         i := i + 1;     -- Skip the 'is'    token.
+         i := i + 1;     -- Skip the 'begin' token.
+
+         Statements := parse_Statements (Tokens, i);
+         Result.do_Block.Statements_are (Statements);
+      end parse_do_Block;
+
+
+      --  if         Tokens.Length   > 0
+      --    and then Tokens (1).Kind = end_Token
+      --  then
+      --     Tokens.delete_First;
+      --  else
+      --     log ("Error: Missing 'end' token.");
+      --     return null;
+      --  end if;
+
+
+      --  if Tokens (1).Kind = identifier_Token
+      --  then
+      --     if   to_Lower (+Tokens (1).Identifier)
+      --       /= to_Lower ( unit_Name)
+      --     then
+      --        log ("Error: Applet name does not match unit name. Should be 'end " & unit_Name & "'.");
+      --        return null;
+      --     end if;
+      --
+      --     Tokens.delete_First;
+      --
+      --  else
+      --     log ("Error: Missing applet name at end. Should be 'end " & unit_Name & "'.");
+      --     return null;
+      --  end if;
+
+
+      --  if        Tokens.Length    = 0
+      --    or else Tokens (1).Kind /= semicolon_Token
+      --  then
+      --     log ("Error: Missing final semicolon at end. Should be 'end " & unit_Name & ";'.");
+      --     return null;
+      --  else
+      --     Tokens.delete_First;
+      --  end if;
+
+
+      --  if Tokens.Length /= 0
+      --  then
+      --     log ("Error: No statements allowed after final 'end' statement. Found '" & (+Tokens (1).Lexeme.Text) & "'.");
+      --     return null;
+      --  end if;
+
+
+
+      --  log; log; log;
+      --  log ("Parsed applet:");
+      --  log;
+      --  log (Result.all'Image);
+      --  log;
+
+      return model.Unit.view (Result);
    end parse_Applet;
 
 
 
 
-   function parse_Class (Source : in String;   unit_Name : in String) return asl2ada.Unit.view
+   function parse_Class (Source : in String;   unit_Name : in String) return asl2ada.Model.Unit.view
    is
    begin
       return null;
@@ -173,7 +494,7 @@ is
 
 
 
-   function parse_Module (Source : in String;   unit_Name : in String) return asl2ada.Unit.view
+   function parse_Module (Source : in String;   unit_Name : in String) return asl2ada.Model.Unit.view
    is
    begin
       return null;
@@ -183,9 +504,9 @@ is
 
 
    function to_Unit (Source : in String;   unit_Name : in String;
-                                           of_Kind   : in unit_Kind) return asl2ada.Unit.view
+                                           of_Kind   : in unit_Kind) return asl2ada.Model.Unit.view
    is
-      Result : asl2ada.Unit.view;
+      Result : asl2ada.Model.Unit.view;
    begin
       case of_Kind
       is
