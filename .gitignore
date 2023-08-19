@@ -15,6 +15,7 @@ applet/asl2ada/asl2ada
 
 
 # Other
+attic
 *-loc.xml
 *.ads.stderr
 *.ads.stdout
