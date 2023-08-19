@@ -40,11 +40,52 @@ Core:
 - User defined => Direct Ada equivalent.
 
 
+
+Classes:
+- Active and passive ?
+- 
+- 
+
+
+__________
+Containers
+~~~~~~~~~~
+
 Arrays:
 - Vector or indefinite vector of a core type.
 - Automatically available w/o need for instantiation.
 - Uses 'my_Vector [Index]' syntax for accessing array members.
 - Named by appending an 's' to the discrete type name (Characters, Strings, Integers, etc).
+
+
+Vectors:
+-
+-
+-
+
+
+Stacks:
+-
+-
+-
+
+
+Lists:
+-
+-
+-
+
+
+Trees:
+-
+-
+-
+
+
+Sets:
+-
+-
+-
 
 
 Maps:
@@ -53,12 +94,6 @@ Maps:
 - Uses 'my_Map [Key]' syntax for accessing members.
 - Named by appending a '_Map' to the discrete type name (Character_Map, Integer_Map, my_Record_Map, etc).
 - Map 'Keys' can be of any type (which are converted to an Ada 'String', via the 'Image attribute).
-
-
-Classes:
-- Active and passive ?
-- 
-- 
 
 
 
@@ -132,6 +167,53 @@ Compilation Units
 - Uses a package named '<applet_name>_applet.ads' which contains all the declarations and code.
 - The package contains the 'open:' code in the package elaboration region and a 'closure' controlled type for 'close:'.
 - Launcher simply 'with's the package and calls 'launch' procedure.
+
+
+- Example:
+-
+   applet Hello
+   is
+      Age : Natural := 1;
+   
+   begin
+      open
+      is
+         X : Integer := 1;
+      begin
+         X := X + 1;
+      exception
+         when constraint_Error =>
+            null;
+      end open;
+
+
+      do
+      is
+         Y : Integer := 1;
+      begin
+         Y := Y + 1;
+         until Y > 10;
+      exception
+         when constraint_Error =>
+            null;
+      end do;
+
+
+      close
+      is
+         Z : Integer := 1;
+      begin
+         log (Z + Age);
+      exception
+         when constraint_Error =>
+            null;
+      end close;
+
+
+   exception
+      when constraint_Error =>
+         null;
+   end Hello;
 
 
 
@@ -269,6 +351,9 @@ Misc
 ~~~~
 
 - Comment token is '--'.
+- '~=' is used to denote case insensitive equality for Text and Strings.
+- Swap assignment:   A, B, C := C, A, B;
+- Parameters for 'applet'.
 
 
 
