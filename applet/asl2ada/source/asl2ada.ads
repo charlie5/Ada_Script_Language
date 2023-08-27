@@ -35,4 +35,8 @@ private
    procedure dlog (Message   : in String);
    procedure dlog (new_Lines : in ada.Text_IO.positive_Count := 1);
 
+
+   function comment_stripped_Source (From : in String) return String;
+
+
 end Asl2Ada;

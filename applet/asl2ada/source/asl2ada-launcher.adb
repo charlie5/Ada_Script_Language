@@ -93,8 +93,6 @@ begin
    --  end test_Parser;
 
 
-
-
    parse_command_Line:
    declare
       use ada.Strings;
@@ -144,20 +142,54 @@ begin
 
 
    translate_Unit_Source:
-   declare
-      use lace.Text.Forge;
-
-      asl_Source : constant String := to_String (Filename (unit_Path));
-      ada_Source : constant String := asl2ada.Translator.translate (asl_Source, unit_Name => +unit_Name,
-                                                                                of_Kind   =>  unit_Kind);
    begin
-      --  dlog ("Translation is ...");
-      --  dlog ("'");
-      --  dlog (ada_Source);
-      --  dlog ("'");
+      case unit_Kind
+      is
+      when parser.Applet =>
+         declare
+            use lace.Text.Forge;
+            asl_Source : constant String := comment_stripped_Source (From => to_String (Filename (unit_Path)));
 
-      lace.Text.forge.store (Filename (output_Path & "/" & (+unit_Name) & ".adb"),
-                             the_String => ada_Source);
+         begin
+            do_applet_spec_Source:
+            declare
+               ada_Source : constant String := asl2ada.Translator.to_applet_spec_Ada_Source (asl_Source,
+                                                                                             unit_Name => +unit_Name);
+            begin
+               lace.Text.forge.store (Filename (output_Path & "/" & (+unit_Name) & "_applet.ads"),
+                                      the_String => ada_Source);
+            end do_applet_spec_Source;
+
+
+            do_applet_body_Source:
+            declare
+               ada_Source : constant String := asl2ada.Translator.to_applet_body_Ada_Source (asl_Source,
+                                                                                             unit_Name => +unit_Name);
+            begin
+               lace.Text.forge.store (Filename (output_Path & "/" & (+unit_Name) & "_applet.adb"),
+                                      the_String => ada_Source);
+            end do_applet_body_Source;
+
+
+            do_applet_launch_Source:
+            declare
+               ada_Source : constant String := asl2ada.Translator.to_applet_launch_Ada_Source (asl_Source,
+                                                                                               unit_Name => +unit_Name);
+            begin
+               lace.Text.forge.store (Filename (output_Path & "/" & (+unit_Name) & "_applet-launch.adb"),
+                                      the_String => ada_Source);
+            end do_applet_launch_Source;
+         end;
+
+
+      when parser.Class =>
+         null;
+
+
+      when parser.Module =>
+         null;
+
+      end case;
    end translate_Unit_Source;
 
 

@@ -59,25 +59,9 @@ is
       use Token;
 
 
-      function Indent return String
-      is
-      begin
-         return +indent_Level * "   ";
-      end Indent;
-
-
-      procedure add (Fragment : in String)
-      is
-      begin
-         append (ada_Source, Fragment);
-      end add;
-
-
-      procedure new_Line
-      is
-      begin
-         append (ada_Source, NL);
-      end new_Line;
+      function  Indent      return String  is begin   return +indent_Level * "   ";    end Indent;
+      procedure add (Fragment : in String) is begin   append (ada_Source, Fragment);   end add;
+      procedure new_Line                   is begin   append (ada_Source, NL);         end new_Line;
 
 
    begin
@@ -93,6 +77,8 @@ is
             begin
                if Call.Name = "log"
                then
+                  indent_Level := indent_Level + 1;
+
                   declare
                      Format : constant String := '"' & Args (1).all.to_String & '"';
                   begin
@@ -141,6 +127,9 @@ is
                      add ("));"           & NL);
                      add (Indent & "end;" & NL & NL);
                   end;
+
+                  indent_Level := indent_Level - 1;
+
 
                else     -- A standard call.
                   add (Indent & Call.Name);
@@ -292,9 +281,9 @@ is
 
       new_Line;
       new_Line;
-      add ("procedure " & the_Applet.Name & NL);
-      add ("is"                           & NL);
-      add ("begin"                        & NL);
+      add ("procedure " & the_Applet.Name & "_Applet.launch" & NL);
+      add ("is"                                              & NL);
+      add ("begin"                                           & NL);
 
 
       translate_do_Block:
@@ -315,7 +304,7 @@ is
 
 
       indent_Level := indent_Level - 1;
-      add (Indent & "end " & the_Applet.Name & ";" & NL);
+      add (Indent & "end " & the_Applet.Name & "_Applet.launch;" & NL);
 
       return +ada_Source;
    end translate_Applet;
@@ -360,67 +349,172 @@ is
 
 
 
-   function translate (Source : in String;   unit_Name : in String;
-                                             of_Kind   : in Parser.unit_Kind) return String
+   function to_applet_spec_Ada_Source (Source : in String;   unit_Name : in String) return String
    is
-
-      function comment_stripped_Source return String
-      is
-         Result : String (Source'Range);
-         Index  : Natural := 0;
-         Skip   : Boolean := False;
-      begin
-         for i in Source'First .. Source'Last - 1
-         loop
-            if    Source (i)     = '-'
-              and Source (i + 1) = '-'
-            then
-               Skip := True;
-            end if;
-
-            if Skip
-            then
-               if Source (i) = NL
-               then
-                  Skip           := False;
-                  Index          := Index + 1;
-                  Result (Index) := NL;
-               end if;
-            else
-               Index          := Index + 1;
-               Result (Index) := Source (i);
-            end if;
-         end loop;
-
-         if    not Skip
-           and Source (Source'Last) /= '-'
-         then
-            Index          := Index + 1;
-            Result (Index) := Source (Source'Last);
-         end if;
-
-         return Result (1 .. Index);
-      end comment_stripped_Source;
-
-
+      the_Unit   : constant asl2ada.Model.Unit.view    := asl2ada.Parser.to_Unit (Source, unit_Name, Parser.Applet);
+      the_Applet : constant model.Unit.asl_Applet.view := model.Unit.asl_Applet.view (the_Unit);
       ada_Source :          unbounded_String;
-      the_Unit   : constant asl2ada.Model.Unit.view := asl2ada.Parser.to_Unit (comment_stripped_Source, unit_Name, of_Kind);
+
+      use type ada.Containers.Count_type;
+      indent_Level : Natural := 0;
+
+      function  Indent      return String  is begin   return +indent_Level * "   ";    end Indent;
+      procedure add (Fragment : in String) is begin   append (ada_Source, Fragment);   end add;
+      procedure new_Line                   is begin   append (ada_Source, NL);         end new_Line;
+
+      applet_Package_Name : constant String := unit_Name & "_Applet";
+
+   begin
+      if the_Applet.Context.Withs.Length > 0
+      then
+         add ("with");
+         new_Line;
+
+         for i in 1 .. Integer (the_Applet.Context.Withs.Length)
+         loop
+            declare
+               Length    : constant Natural := Integer (the_Applet.Context.Withs.Length);
+               unit_Name : constant String  := the_Applet.Context.Withs (i);
+            begin
+               if i = Length then add ("     " & unit_Name & ";" & NL);
+               else add ("     " & unit_Name & ",");
+               end if;
+            end;
+         end loop;
+      end if;
+
+
+      new_Line;
+      new_Line;
+      add ("package " & applet_Package_Name   & NL);
+      add ("is"                               & NL);
+      add ("   procedure open;"               & NL);
+      add ("   procedure do_it;"              & NL);
+      add ("   procedure close;"              & NL);
+      add ("end " & applet_Package_Name & ";" & NL);
+
+      return +ada_Source;
+   end to_applet_spec_Ada_Source;
+
+
+
+
+   function to_applet_body_Ada_Source (Source : in String;   unit_Name : in String) return String
+   is
+      the_Unit   : constant asl2ada.Model.Unit.view    := asl2ada.Parser.to_Unit (Source, unit_Name, Parser.Applet);
+      the_Applet : constant model.Unit.asl_Applet.view := model.Unit.asl_Applet.view (the_Unit);
+      ada_Source :          unbounded_String;
+
+      use type ada.Containers.Count_type;
+      indent_Level : Natural := 0;
+
+      function  Indent      return String  is begin   return +indent_Level * "   ";    end Indent;
+      procedure add (Fragment : in String) is begin   append (ada_Source, Fragment);   end add;
+      procedure new_Line                   is begin   append (ada_Source, NL);         end new_Line;
+
+      applet_Package_Name : constant String := unit_Name & "_Applet";
+
    begin
       --  dlog ("Translating '" & unit_Name & "' " & to_Lower (of_Kind'Image) & ".");
 
       add_with_of_Asl_Ada_Core          (to_Source => ada_Source);
       add_with_of_Gnat_formatted_String (to_Source => ada_Source);
-      add_with_of_Ada_Text_IO (to_Source => ada_Source);
+      add_with_of_Ada_Text_IO           (to_Source => ada_Source);
 
-      case of_Kind
-      is
-         when Parser.Applet =>   append (ada_Source, translate_Applet (model.Unit.asl_Applet.view (the_Unit)));
-         when Parser.Class  =>   return translate_Class  (the_Unit);
-         when Parser.Module =>   return translate_Module (the_Unit);
-      end case;
+      new_Line;
+      new_Line;
+      add ("package body " & applet_Package_Name   & NL);
+      add ("is"                                    & NL);
+      add ("   procedure open  is null;"           & NL);
+
+      new_Line;
+      new_Line;
+      add ("   procedure close is null;"           & NL);
+
+
+      new_Line;
+      new_Line;
+      add ("   procedure do_it"              & NL);
+      add ("   is"                           & NL);
+      add ("   begin"                        & NL);
+
+      indent_Level := indent_Level + 1;
+      translate_Statements (the_Applet.do_Block.Statements, indent_Level, ada_Source);
+      indent_Level := indent_Level - 1;
+
+      add ("   end do_it;"                   & NL);
+
+
+      new_Line;
+      new_Line;
+      --  append (ada_Source, translate_Applet (model.Unit.asl_Applet.view (the_Unit)));
+
+      new_Line;
+      new_Line;
+      add ("end " & applet_Package_Name & ";" & NL);
 
       return +ada_Source;
-   end translate;
+   end to_applet_body_Ada_Source;
+
+
+
+
+   function to_applet_launch_Ada_Source (Source : in String;   unit_Name : in String) return String
+   is
+      the_Unit   : constant asl2ada.Model.Unit.view := asl2ada.Parser.to_Unit (Source, unit_Name, Parser.Applet);
+      ada_Source :          unbounded_String;
+
+      use type ada.Containers.Count_type;
+      indent_Level : Natural := 0;
+
+      function  Indent      return String  is begin   return +indent_Level * "   ";    end Indent;
+      procedure add (Fragment : in String) is begin   append (ada_Source, Fragment);   end add;
+      procedure new_Line                   is begin   append (ada_Source, NL);         end new_Line;
+
+      applet_Package_Name : constant String := unit_Name & "_Applet";
+
+   begin
+      --  dlog ("Translating '" & unit_Name & "' " & to_Lower (of_Kind'Image) & ".");
+
+      new_Line;
+      new_Line;
+      add ("procedure " & applet_Package_Name & ".launch" & NL);
+      add ("is"                                           & NL);
+      add ("begin"                                        & NL);
+      add ("   " & applet_Package_Name & ".open;"         & NL);
+      add ("   " & applet_Package_Name & ".do_it;"        & NL);
+      add ("   " & applet_Package_Name & ".close;"        & NL);
+      new_line;
+      add ("exception"                                    & NL);
+      add ("   when others => null;"                      & NL);
+      add ("end " & applet_Package_Name & ".launch;"      & NL);
+
+      return +ada_Source;
+   end to_applet_launch_Ada_Source;
+
+
+
+   --  function to_applet_launch_Ada_Source (Source : in String;   unit_Name : in String;
+   --                                        of_Kind   : in Parser.unit_Kind) return String
+   --  is
+   --     ada_Source :          unbounded_String;
+   --     the_Unit   : constant asl2ada.Model.Unit.view := asl2ada.Parser.to_Unit (Source, unit_Name, of_Kind);
+   --  begin
+   --     --  dlog ("Translating '" & unit_Name & "' " & to_Lower (of_Kind'Image) & ".");
+   --
+   --     add_with_of_Asl_Ada_Core          (to_Source => ada_Source);
+   --     add_with_of_Gnat_formatted_String (to_Source => ada_Source);
+   --     add_with_of_Ada_Text_IO           (to_Source => ada_Source);
+   --
+   --     case of_Kind
+   --     is
+   --        when Parser.Applet =>   append (ada_Source, translate_Applet (model.Unit.asl_Applet.view (the_Unit)));
+   --        when Parser.Class  =>   return translate_Class  (the_Unit);
+   --        when Parser.Module =>   return translate_Module (the_Unit);
+   --     end case;
+   --
+   --     return +ada_Source;
+   --  end to_applet_launch_Ada_Source;
 
 
 end asl2ada.Translator;

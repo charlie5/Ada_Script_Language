@@ -333,12 +333,12 @@ begin
                      add ("                            ""../../runtime/ada/**"");");
                      add ("   for object_Dir      use ""build"";");
                      add ("   for exec_Dir        use ""../../bin/exec"";");
-                     add ("   for Main            use (""" & project_Name & """);");
+                     add ("   for Main            use (""" & project_Name & "_applet-launch"");");
                      add;
                      add ("   package Builder is");
                      add ("      for default_Switches (""Ada"")     use asl_Applet_default.Builder'default_Switches (""Ada"");");
                      add ("      for global_configuration_Pragmas   use asl_Applet_default.Builder'global_configuration_Pragmas;");
-                     add ("      for Executable       (""" & project_Name & ".adb"") use """ & project_Name & ".exec"";");
+                     add ("      for Executable       (""" & project_Name & "_applet-launch.adb"") use """ & project_Name & ".exec"";");
                      add ("   end Builder;");
                      add;
                      add ("end " & project_Name & ";");
