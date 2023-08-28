@@ -29,36 +29,39 @@ is
 
 
 
-   function parse_Context (Tokens : in out Token.vector;   Errors_found : in out Boolean) return Model.Unit.context_Clauses
+   function parse_Context (From         : in     Token.vector;
+                           i            : in out Positive;
+                           Errors_found : in out Boolean) return Model.Unit.context_Clauses
    is
       use Token;
+      Tokens : Token.vector renames From;
       Result : Model.Unit.context_Clauses;
    begin
       Outer:
       loop
-         if Tokens (1).Kind = identifier_Token
+         if Tokens (i).Kind = identifier_Token
          then
             declare
                withed_unit_Name : unbounded_String;
             begin
                loop
-                  append (withed_unit_Name, Tokens (1).Identifier);
-                  Tokens.delete_First;
+                  append (withed_unit_Name, Tokens (i).Identifier);
+                  i := i + 1;
 
-                  if Tokens (1).Kind = dot_Token
+                  if Tokens (i).Kind = dot_Token
                   then
                      append (withed_unit_Name, ".");
-                     Tokens.delete_First;
+                     i := i + 1;
 
-                  elsif Tokens (1).Kind = comma_Token
+                  elsif Tokens (i).Kind = comma_Token
                   then
-                     Tokens.delete_First;
+                     i := i + 1;
                      exit;
 
-                  elsif Tokens (1).Kind = semicolon_Token
+                  elsif Tokens (i).Kind = semicolon_Token
                   then
                      Result.Withs.append (to_String (withed_unit_Name));
-                     Tokens.delete_First;
+                     i := i + 1;
                      exit Outer;
                   end if;
 
@@ -279,6 +282,8 @@ is
       applet_Tokens :          Lexer.applet_Tokens                := Lexer.to_applet_Tokens (Tokens, unit_Name);
       Result        : constant asl2ada.Model.Unit.asl_Applet.view := new asl2ada.Model.Unit.asl_Applet.item;
 
+      i : Positive := 1;
+
    begin
       dlog (applet_Tokens'Image);
 
@@ -325,26 +330,26 @@ is
       --  end loop;
 
 
-      --  parse_the_Context:
-      --  begin
-      --     if Tokens (1).Kind = with_Token
-      --     then
-      --        Tokens.delete_First;
-      --
-      --        add_Context:
-      --        declare
-      --           the_Context : constant Unit.context_Clauses := parse_Context (Tokens, Errors_found);
-      --        begin
-      --           if Errors_found
-      --           then
-      --              log ("Errors found!");
-      --              return null;
-      --           else
-      --              Result.Context_is (the_Context);
-      --           end if;
-      --        end add_Context;
-      --     end if;
-      --  end parse_the_Context;
+      parse_the_Context:
+      begin
+         if Tokens (i).Kind = with_Token
+         then
+            i := i + 1;
+
+            add_Context:
+            declare
+               the_Context : constant model.Unit.context_Clauses := parse_Context (Tokens, i, Errors_found);
+            begin
+               if Errors_found
+               then
+                  log ("Errors found!");
+                  return null;
+               else
+                  Result.Context_is (the_Context);
+               end if;
+            end add_Context;
+         end if;
+      end parse_the_Context;
 
 
       parse_the_Applet_Name:
@@ -416,7 +421,6 @@ is
          --  do_Block   :
          Tokens     : Token.vector renames applet_Tokens.do_Block;
          Statements : Model.Statement.vector;
-         i          : Positive := 1;
       begin
          --  log (Tokens.Length'Image);
 
