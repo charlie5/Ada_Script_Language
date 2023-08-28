@@ -316,22 +316,43 @@ Exceptions
 - Or, instead of JSON, use unchecked_Conversion from error type to String, in the raise, and back again in the handler.
 
 
-Example:
+Examples:
 
-- error Foo
+- Foo : exception
   is
      I : Integer;
-  end error;
+     J : Character;
+  end Foo;
 
 
-- raise Foo (I => 5);
+- raise Foo (I => 5,
+             J => 'x');
 
 
 - exception
      when Foo =>
-        if Foo.I = 5
+        if     Foo.I = 5
+           and Foo.J = ' '
         then
-           <action>;
+           <statements>;
+        end if;
+
+
+
+- Bar : exception
+  is
+     Date : ada.Calendar.Time;
+  end Bar;
+
+
+- raise Bar (Date => ada.Calendar.Clock);
+
+
+- exception
+     when Bar =>
+        if Year (Bar.Date) >= 2000 
+        then
+           <statements>
         end if;
 
 
