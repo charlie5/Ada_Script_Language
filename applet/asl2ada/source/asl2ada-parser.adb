@@ -2,6 +2,7 @@ with
      asl2ada.Model.Unit.asl_Applet,
      asl2ada.Model.Call,
      asl2ada.Model.Expression,
+     asl2ada.Model.Declaration.of_variable,
      asl2ada.Model.Statement.call,
      asl2ada.Model.Statement.for_loop,
      asl2ada.Model.Statement.a_null,
@@ -113,6 +114,70 @@ is
    end parse_Expression;
 
 
+
+
+
+   function parse_Declarations (From : in Token.vector;   i : in out Positive) return model.Declaration.vector
+   is
+      Tokens : Token.vector renames From;
+      Result : model.Declaration.vector;
+
+   begin
+      while i <= Integer (Tokens.Length)
+      loop
+         dlog ("parse_Declarations ~ " & Tokens (i).Kind'Image);
+
+         declare
+            use asl2ada.Token;
+
+
+            function Current return Token.item
+            is
+            begin
+               return Tokens (i);
+            end Current;
+
+
+            function Next (Offset : in Positive := 1) return Token.item
+            is
+               next_Token : Token.item;
+            begin
+               if i + Offset <= Integer (Tokens.Length)
+               then
+                  next_Token := Tokens (i + Offset);
+               end if;
+
+               return next_Token;
+            end Next;
+
+
+         begin
+            if Current.Kind = identifier_Token
+            then
+               declare
+                  use Model.Declaration.of_variable.Forge;
+                  Variable : constant Model.Declaration.of_variable.view := new_variable_Declaration (Identifier => +Current.Identifier);
+               begin
+                  i := i + 1;     -- Move to next token.
+                  i := i + 1;     -- Skip colon token.
+                  dlog (Current'Image);
+                  Variable.Type_is (+Current.Identifier);
+
+                  Result.append (model.Declaration.view (Variable));
+               end;
+
+               i := i + 1;        -- Skip semicolon.
+            end if;
+
+         end;
+
+         i := i + 1;              -- Move to next token.
+         dlog ("parse_Declarations ~ i:" & i'Image);
+      end loop;
+
+
+      return Result;
+   end parse_Declarations;
 
 
 
@@ -268,6 +333,7 @@ is
 
 
 
+
    function parse_Applet (Source : in String;   unit_Name : in String) return asl2ada.Model.Unit.view
    is
       use asl2ada.Token,
@@ -281,8 +347,6 @@ is
       Tokens        :          Token.vector                       := Lexer.to_Tokens (Source, Errors);
       applet_Tokens :          Lexer.applet_Tokens                := Lexer.to_applet_Tokens (Tokens, unit_Name);
       Result        : constant asl2ada.Model.Unit.asl_Applet.view := new asl2ada.Model.Unit.asl_Applet.item;
-
-      i : Positive := 1;
 
    begin
       dlog (applet_Tokens'Image);
@@ -331,10 +395,14 @@ is
 
 
       parse_the_Context:
+      declare
+         Tokens : Token.vector renames applet_Tokens.Context;
+         i      : Positive          := 1;
+
       begin
-         if Tokens (i).Kind = with_Token
+         if not Tokens.is_Empty
          then
-            i := i + 1;
+            i := i + 1;     -- Skip 'with' token.
 
             add_Context:
             declare
@@ -397,6 +465,20 @@ is
       --  end add_Declarations;
 
 
+      parse_global_Declarations:
+      declare
+         Tokens     :   Token.vector renames applet_Tokens.Declarations;
+         i            : Positive          := 1;
+         Declarations : Model.Declaration.vector;
+      begin
+         Declarations := parse_Declarations (Tokens, i);
+
+         log ("JJJJJJJJJJJJJJJJJJJJJ" & Declarations.Length'Image);
+
+         Result.Declarations_are (Declarations);
+      end parse_global_Declarations;
+
+
       --  if Tokens (1).Kind = asl_do_Token
       --  then
       --     Tokens.delete_First;
@@ -418,10 +500,11 @@ is
 
       parse_do_Block:
       declare
-         --  do_Block   :
          Tokens     : Token.vector renames applet_Tokens.do_Block;
+         i          : Positive          := 1;
          Statements : Model.Statement.vector;
       begin
+         --  i := 1;
          --  log (Tokens.Length'Image);
 
          i := i + 1;     -- Skip the 'is'    token.

@@ -3,6 +3,7 @@ with
      asl2ada.Lexeme,
      asl2ada.Model.Unit.asl_Applet,
      asl2ada.Model.Expression,
+     asl2ada.Model.Declaration.of_variable,
      asl2ada.Model.Statement.call,
      asl2ada.Model.Statement.block,
      asl2ada.Model.Statement.for_loop,
@@ -45,6 +46,50 @@ is
       insert (to_Source, before   => 1,
                          new_Item => "with ada.Text_IO;" & NL);
    end add_with_of_Ada_Text_IO;
+
+
+
+
+
+
+
+   procedure translate_Declarations (the_Declarations : in     model.Declaration.vector;
+                                     indent_Level     : in out Positive;
+                                     ada_Source       : in out uString)
+   is
+      use Token;
+
+      function  Indent      return String  is begin   return +indent_Level * "   ";    end Indent;
+      procedure add (Fragment : in String) is begin   append (ada_Source, Fragment);   end add;
+      procedure new_Line                   is begin   append (ada_Source, NL);         end new_Line;
+
+
+   begin
+      for Each of the_Declarations
+      loop
+         dlog ("Translating declaration: " & Each.all'Image);
+
+         if Each.all in model.Declaration.of_variable.item'Class
+         then
+            declare
+               Variable : constant model.Declaration.of_variable.view := Model.Declaration.of_variable.view (Each);
+            begin
+               add (Indent);
+               add (Variable.Identifier);
+               add (" : ");
+               add (Variable.my_Type);
+               add (";");
+               new_Line;
+            end;
+
+         else
+            dlog ("Unhandled declaration found:");
+            dlog (Each.all'Image);
+         end if;
+
+      end loop;
+   end translate_Declarations;
+
 
 
 
@@ -388,6 +433,15 @@ is
       new_Line;
       add ("package " & applet_Package_Name   & NL);
       add ("is"                               & NL);
+
+      indent_Level := indent_Level + 1;
+      log ("KKKKKKKKKKKKKKKKKKKKK: " & the_Applet.Declarations.Length'Image);
+      translate_Declarations (the_Applet.Declarations, indent_Level, ada_Source);
+      indent_Level := indent_Level - 1;
+
+      new_Line;
+      new_Line;
+
       add ("   procedure open;"               & NL);
       add ("   procedure do_it;"              & NL);
       add ("   procedure close;"              & NL);
