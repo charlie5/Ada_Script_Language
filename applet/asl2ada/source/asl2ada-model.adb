@@ -1,5 +1,6 @@
 with
-   asl2ada.Model.Unit;
+     asl2ada.Model.Unit,
+     ada.unchecked_Conversion;
 
 
 package body asl2ada.Model
@@ -35,6 +36,68 @@ is
       Self.Unit_map.insert (Unit.Name,
                             Unit);
    end add;
+
+
+
+   ---------------
+   --- Identifiers
+   --
+
+   function is_Valid (Name : Identifier) return Boolean
+   is
+      First : constant identifier_Character := Name (Name'First);
+   begin
+      return First /= '_'
+         and First not in '0' .. '9';
+   end is_Valid;
+
+
+
+   function "+" (Name : in Identifier) return String
+   is
+      function convert is new ada.unchecked_Conversion (identifier_Character, Character);
+      Result : String (Name'Range);
+   begin
+      for i in Name'Range
+      loop
+         Result (i) := convert (Name (i));
+      end loop;
+
+      return Result;
+   end "+";
+
+
+
+   function "+" (Name : in String) return Identifier
+   is
+      function convert is new ada.unchecked_Conversion (Character, identifier_Character);
+      Result : Identifier (Name'Range);
+   begin
+      for i in Name'Range
+      loop
+         Result (i) := convert (Name (i));
+      end loop;
+
+      return Result;
+   end "+";
+
+
+
+   function "+" (Name : in Identifier) return uString
+   is
+      use ada.Strings.unbounded;
+   begin
+      return to_unbounded_String (+Name);
+   end "+";
+
+
+
+   function "+" (Name : in uString) return Identifier
+   is
+      use ada.Strings.unbounded;
+   begin
+      return +to_String (Name);
+   end "+";
 
 
 end asl2ada.Model;

@@ -6,6 +6,8 @@ with
      asl2ada.Model.Statement.call,
      asl2ada.Model.Statement.for_loop,
      asl2ada.Model.Statement.a_null,
+     asl2ada.Model.Statement.a_raise,
+
      asl2ada.Lexer,
      asl2ada.Token,
      asl2ada.Error,
@@ -189,7 +191,7 @@ is
    begin
       while i <= Integer (Tokens.Length)
       loop
-         dlog ("parser:124 ~ " & Tokens (i).Kind'Image);
+         dlog ("parse_Statements ~ " & Tokens (i).Kind'Image);
 
          declare
             use asl2ada.Token;
@@ -307,7 +309,22 @@ is
                end;
 
 
+            elsif Current.Kind = raise_Token
+            then
+               log (+Next.Identifier);
+
+               declare
+                  use Model,
+                      Model.Statement.a_raise.Forge;
+                  raise_Statement : model.Statement.a_raise.view := new_raise_Statement (Raises => +Next.Identifier);
+               begin
+                  i := i + 3;     -- Skip Identifier and ';' tokens.
+                  Result.append (Model.Statement.view (raise_Statement));
+               end;
+
+
             else
+               log ("KKKKKKKKKKKKKKKK " & Current'Image);
                declare
                   Statement : Model.Statement.view := new Model.Statement.item;
                begin
@@ -318,6 +335,7 @@ is
                   end loop;
 
                   Result.append (Statement);
+                  i := i + 1;
                end;
             end if;
          end;
@@ -472,9 +490,6 @@ is
          Declarations : Model.Declaration.vector;
       begin
          Declarations := parse_Declarations (Tokens, i);
-
-         log ("JJJJJJJJJJJJJJJJJJJJJ" & Declarations.Length'Image);
-
          Result.Declarations_are (Declarations);
       end parse_global_Declarations;
 

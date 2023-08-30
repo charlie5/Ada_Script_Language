@@ -1,13 +1,15 @@
 with
      asl2ada.Token,
      asl2ada.Lexeme,
-     asl2ada.Model.Unit.asl_Applet,
-     asl2ada.Model.Expression,
-     asl2ada.Model.Declaration.of_variable,
-     asl2ada.Model.Statement.call,
-     asl2ada.Model.Statement.block,
-     asl2ada.Model.Statement.for_loop,
-     asl2ada.Model.Statement.a_null,
+
+     asl2ada.model.Unit.asl_Applet,
+     asl2ada.model.Expression,
+     asl2ada.model.Declaration.of_variable,
+     asl2ada.model.Statement.call,
+     asl2ada.model.Statement.block,
+     asl2ada.model.Statement.for_loop,
+     asl2ada.model.Statement.a_null,
+     asl2ada.model.Statement.a_raise,
 
      ada.Strings.unbounded;
 
@@ -231,10 +233,25 @@ is
             indent_Level := indent_Level - 1;
 
 
+         elsif Each.all in model.Statement.a_raise.item'Class
+         then
+            declare
+               use asl2ada.Model;
+               the_Raise : constant Model.Statement.a_raise.view := Model.Statement.a_raise.view (Each);
+            begin
+               indent_Level := indent_Level + 1;
+               add (Indent);
+               add ("raise ");
+               add (+the_Raise.Raises);
+               add (";");
+               new_Line;
+               indent_Level := indent_Level - 1;
+            end;
+
+
          else     -- Assume raw Ada.
             declare
                prior_L : Lexeme.item;
-
             begin
                for i in 1 .. Integer (Each.Lexemes.Length)
                loop
@@ -435,7 +452,6 @@ is
       add ("is"                               & NL);
 
       indent_Level := indent_Level + 1;
-      log ("KKKKKKKKKKKKKKKKKKKKK: " & the_Applet.Declarations.Length'Image);
       translate_Declarations (the_Applet.Declarations, indent_Level, ada_Source);
       indent_Level := indent_Level - 1;
 
@@ -540,7 +556,7 @@ is
       add ("   " & applet_Package_Name & ".close;"        & NL);
       new_line;
       add ("exception"                                    & NL);
-      add ("   when others => null;"                      & NL);
+      add ("   when others => raise;"                     & NL);
       add ("end " & applet_Package_Name & ".launch;"      & NL);
 
       return +ada_Source;
