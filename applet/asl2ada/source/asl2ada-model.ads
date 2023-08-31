@@ -39,7 +39,11 @@ is
                                  '_',
                                  'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z');
 
-   type Identifier is array (Positive range <>) of identifier_Character;
+   type Identifier is array (Positive range <>) of identifier_Character
+     with
+       Dynamic_Predicate => Identifier'Length > 0 and then (    Identifier (Identifier'First)     /= '_'
+                                                            and Identifier (Identifier'First) not in '0' .. '9'),
+       Predicate_Failure => raise constraint_Error with "Identifier may not start with an underscore or digit.";
 
 
    function is_Valid (Name : in Identifier) return Boolean;
@@ -146,10 +150,5 @@ private
 
 
 
-
-                                 --  others => +'0');
-                                 --  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-                                 --  '_',
-                                --  'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z');
 
 end asl2ada.Model;
