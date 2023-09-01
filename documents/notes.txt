@@ -217,7 +217,7 @@ Compilation Units
 
 
 
-- Class:  'animal.class'
+- Class:  'animal.spec' & 'animal.body'.
 -   Forge:
 -   Attributes:
 -   Operations:
@@ -226,16 +226,15 @@ Compilation Units
 
 
 
-- Module: 'maths.module'
+- Module: 'maths.spec' & 'maths.body.
 -   Public:
--   Hidden:
 -   Private:
 -   open:          Translates to the procedural section at the end of an Ada package body. Optional.
 -   close:         Translates to the 'Finalise' procedure of a controlled type. Optional.
 
 
 
-- Package: 'gui.ads' 'gui.adb'
+- Package: 'gui.ads' & 'gui.adb'.
 -   A standard Ada package.
 
 
