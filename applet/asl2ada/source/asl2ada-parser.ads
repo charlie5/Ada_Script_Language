@@ -1,6 +1,6 @@
 with
      --  asl2ada.Model,
-     asl2ada.Model.Unit,
+     asl2ada.parser_Model.Unit,
      --  asl2ada.Token,
      --  asl2ada.Lexer,
 
@@ -16,7 +16,7 @@ is
 
 
    function to_Unit (Source : in String;   unit_Name : in String;
-                                           of_Kind   : in unit_Kind) return asl2ada.Model.Unit.view;
+                                           of_Kind   : in unit_Kind) return asl2ada.parser_Model.Unit.view;
 
 
 

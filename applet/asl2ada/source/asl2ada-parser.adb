@@ -1,12 +1,12 @@
 with
-     asl2ada.Model.Unit.asl_Applet,
-     asl2ada.Model.Call,
-     asl2ada.Model.Expression,
-     asl2ada.Model.Declaration.of_variable,
-     asl2ada.Model.Statement.call,
-     asl2ada.Model.Statement.for_loop,
-     asl2ada.Model.Statement.a_null,
-     asl2ada.Model.Statement.a_raise,
+     asl2ada.parser_Model.Unit.asl_Applet,
+     asl2ada.parser_Model.Call,
+     asl2ada.parser_Model.Expression,
+     asl2ada.parser_Model.Declaration.of_variable,
+     asl2ada.parser_Model.Statement.call,
+     asl2ada.parser_Model.Statement.for_loop,
+     asl2ada.parser_Model.Statement.a_null,
+     asl2ada.parser_Model.Statement.a_raise,
 
      asl2ada.Lexer,
      asl2ada.Token,
@@ -34,11 +34,11 @@ is
 
    function parse_Context (From         : in     Token.vector;
                            i            : in out Positive;
-                           Errors_found : in out Boolean) return Model.Unit.context_Clauses
+                           Errors_found : in out Boolean) return parser_Model.Unit.context_Clauses
    is
       use Token;
       Tokens : Token.vector renames From;
-      Result : Model.Unit.context_Clauses;
+      Result : parser_Model.Unit.context_Clauses;
    begin
       Outer:
       loop
@@ -87,10 +87,10 @@ is
 
 
 
-   function parse_Expression (From : in Token.vector;   i : in out Positive) return model.Expression.view
+   function parse_Expression (From : in Token.vector;   i : in out Positive) return parser_Model.Expression.view
    is
       Tokens :          Token.vector     renames From;
-      Result : constant model.Expression.view := new model.Expression.item;
+      Result : constant parser_Model.Expression.view := new parser_Model.Expression.item;
 
       use asl2ada.Token;
 
@@ -119,10 +119,10 @@ is
 
 
 
-   function parse_Declarations (From : in Token.vector;   i : in out Positive) return model.Declaration.vector
+   function parse_Declarations (From : in Token.vector;   i : in out Positive) return parser_Model.Declaration.vector
    is
       Tokens : Token.vector renames From;
-      Result : model.Declaration.vector;
+      Result : parser_Model.Declaration.vector;
 
    begin
       while i <= Integer (Tokens.Length)
@@ -157,15 +157,15 @@ is
             if Current.Kind = identifier_Token
             then
                declare
-                  use Model.Declaration.of_variable.Forge;
-                  Variable : constant Model.Declaration.of_variable.view := new_variable_Declaration (Identifier => +Current.Identifier);
+                  use parser_Model.Declaration.of_variable.Forge;
+                  Variable : constant parser_Model.Declaration.of_variable.view := new_variable_Declaration (Identifier => +Current.Identifier);
                begin
                   i := i + 1;     -- Move to next token.
                   i := i + 1;     -- Skip colon token.
                   dlog (Current'Image);
                   Variable.Type_is (+Current.Identifier);
 
-                  Result.append (model.Declaration.view (Variable));
+                  Result.append (parser_Model.Declaration.view (Variable));
                end;
 
                i := i + 1;        -- Skip semicolon.
@@ -183,10 +183,10 @@ is
 
 
 
-   function parse_Statements (From : in Token.vector;   i : in out Positive) return model.Statement.vector
+   function parse_Statements (From : in Token.vector;   i : in out Positive) return parser_Model.Statement.vector
    is
       Tokens : Token.vector renames From;
-      Result : model.Statement.vector;
+      Result : parser_Model.Statement.vector;
 
    begin
       while i <= Integer (Tokens.Length)
@@ -221,8 +221,8 @@ is
             if Current.Kind = identifier_Token
             then
                declare
-                  use Model.Statement.Call.Forge;
-                  Call : Model.Statement.Call.view := new_Call_Statement (Name => +Current.Identifier);
+                  use parser_Model.Statement.Call.Forge;
+                  Call : parser_Model.Statement.Call.view := new_Call_Statement (Name => +Current.Identifier);
                begin
                   i := i + 1;
 
@@ -257,16 +257,16 @@ is
 
                   --  dlog ("Adding 'call' statement.");
                   --  dlog (Call.all'Image);
-                  Result.append (Model.Statement.view (Call));
+                  Result.append (parser_Model.Statement.view (Call));
                end;
 
 
             elsif Current.Kind = for_Token
             then
                declare
-                  use Model.Statement.for_loop.Forge;
-                  for_Statement   : model.Statement.for_loop.view := new_for_loop_Statement (Variable => +Next.Identifier);
-                  loop_Statements : model.Statement.vector;
+                  use parser_Model.Statement.for_loop.Forge;
+                  for_Statement   : parser_Model.Statement.for_loop.view := new_for_loop_Statement (Variable => +Next.Identifier);
+                  loop_Statements : parser_Model.Statement.vector;
                begin
                   i := i + 3;     -- Skip 'for', 'identifier' and 'in' tokens.
                   --  dlog ("159:" & Current.Kind'Image);
@@ -281,7 +281,7 @@ is
                   for_Statement.Statements_are (loop_Statements);
 
                   --  dlog ("my Adding 'for_loop' statement.");
-                  Result.append (Model.Statement.view (for_Statement));
+                  Result.append (parser_Model.Statement.view (for_Statement));
 
                   -- i := i + 1;     -- Skip 'end', 'loop' and ';' tokens.
                end;
@@ -291,11 +291,11 @@ is
             then
                dlog ("Null token ~ i:" & i'Image);
                declare
-                  use Model.Statement.a_null.Forge;
-                  null_Statement : model.Statement.a_null.view := new_null_Statement;
+                  use parser_Model.Statement.a_null.Forge;
+                  null_Statement : parser_Model.Statement.a_null.view := new_null_Statement;
                begin
                   i := i + 2;     -- Skip 'null' and ';' tokens.
-                  Result.append (Model.Statement.view (null_Statement));
+                  Result.append (parser_Model.Statement.view (null_Statement));
                end;
 
 
@@ -314,19 +314,19 @@ is
                log (+Next.Identifier);
 
                declare
-                  use Model,
-                      Model.Statement.a_raise.Forge;
-                  raise_Statement : model.Statement.a_raise.view := new_raise_Statement (Raises => +Next.Identifier);
+                  use parser_Model,
+                      parser_Model.Statement.a_raise.Forge;
+                  raise_Statement : parser_Model.Statement.a_raise.view := new_raise_Statement (Raises => +Next.Identifier);
                begin
                   i := i + 3;     -- Skip Identifier and ';' tokens.
-                  Result.append (Model.Statement.view (raise_Statement));
+                  Result.append (parser_Model.Statement.view (raise_Statement));
                end;
 
 
             else
                log ("KKKKKKKKKKKKKKKK " & Current'Image);
                declare
-                  Statement : Model.Statement.view := new Model.Statement.item;
+                  Statement : parser_Model.Statement.view := new parser_Model.Statement.item;
                begin
                   while Current.Kind /= semicolon_Token
                   loop
@@ -352,7 +352,7 @@ is
 
 
 
-   function parse_Applet (Source : in String;   unit_Name : in String) return asl2ada.Model.Unit.view
+   function parse_Applet (Source : in String;   unit_Name : in String) return asl2ada.parser_Model.Unit.view
    is
       use asl2ada.Token,
           asl2ada.Lexer,
@@ -364,7 +364,7 @@ is
       Errors_found  :          Boolean                            := False;
       Tokens        :          Token.vector                       := Lexer.to_Tokens (Source, Errors);
       applet_Tokens :          Lexer.applet_Tokens                := Lexer.to_applet_Tokens (Tokens, unit_Name);
-      Result        : constant asl2ada.Model.Unit.asl_Applet.view := new asl2ada.Model.Unit.asl_Applet.item;
+      Result        : constant asl2ada.parser_Model.Unit.asl_Applet.view := new asl2ada.parser_Model.Unit.asl_Applet.item;
 
    begin
       dlog (applet_Tokens'Image);
@@ -424,7 +424,7 @@ is
 
             add_Context:
             declare
-               the_Context : constant model.Unit.context_Clauses := parse_Context (Tokens, i, Errors_found);
+               the_Context : constant parser_Model.Unit.context_Clauses := parse_Context (Tokens, i, Errors_found);
             begin
                if Errors_found
                then
@@ -487,7 +487,7 @@ is
       declare
          Tokens     :   Token.vector renames applet_Tokens.Declarations;
          i            : Positive          := 1;
-         Declarations : Model.Declaration.vector;
+         Declarations : parser_Model.Declaration.vector;
       begin
          Declarations := parse_Declarations (Tokens, i);
          Result.Declarations_are (Declarations);
@@ -517,7 +517,7 @@ is
       declare
          Tokens     : Token.vector renames applet_Tokens.do_Block;
          i          : Positive          := 1;
-         Statements : Model.Statement.vector;
+         Statements : parser_Model.Statement.vector;
       begin
          --  i := 1;
          --  log (Tokens.Length'Image);
@@ -581,13 +581,13 @@ is
       --  log (Result.all'Image);
       --  log;
 
-      return model.Unit.view (Result);
+      return parser_Model.Unit.view (Result);
    end parse_Applet;
 
 
 
 
-   function parse_Class (Source : in String;   unit_Name : in String) return asl2ada.Model.Unit.view
+   function parse_Class (Source : in String;   unit_Name : in String) return asl2ada.parser_Model.Unit.view
    is
    begin
       return null;
@@ -596,7 +596,7 @@ is
 
 
 
-   function parse_Module (Source : in String;   unit_Name : in String) return asl2ada.Model.Unit.view
+   function parse_Module (Source : in String;   unit_Name : in String) return asl2ada.parser_Model.Unit.view
    is
    begin
       return null;
@@ -606,9 +606,9 @@ is
 
 
    function to_Unit (Source : in String;   unit_Name : in String;
-                                           of_Kind   : in unit_Kind) return asl2ada.Model.Unit.view
+                                           of_Kind   : in unit_Kind) return asl2ada.parser_Model.Unit.view
    is
-      Result : asl2ada.Model.Unit.view;
+      Result : asl2ada.parser_Model.Unit.view;
    begin
       case of_Kind
       is

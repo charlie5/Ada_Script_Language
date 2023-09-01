@@ -2,14 +2,14 @@ with
      asl2ada.Token,
      asl2ada.Lexeme,
 
-     asl2ada.model.Unit.asl_Applet,
-     asl2ada.model.Expression,
-     asl2ada.model.Declaration.of_variable,
-     asl2ada.model.Statement.call,
-     asl2ada.model.Statement.block,
-     asl2ada.model.Statement.for_loop,
-     asl2ada.model.Statement.a_null,
-     asl2ada.model.Statement.a_raise,
+     asl2ada.parser_Model.Unit.asl_Applet,
+     asl2ada.parser_Model.Expression,
+     asl2ada.parser_Model.Declaration.of_variable,
+     asl2ada.parser_Model.Statement.call,
+     asl2ada.parser_Model.Statement.block,
+     asl2ada.parser_Model.Statement.for_loop,
+     asl2ada.parser_Model.Statement.a_null,
+     asl2ada.parser_Model.Statement.a_raise,
 
      ada.Strings.unbounded;
 
@@ -55,7 +55,7 @@ is
 
 
 
-   procedure translate_Declarations (the_Declarations : in     model.Declaration.vector;
+   procedure translate_Declarations (the_Declarations : in     parser_Model.Declaration.vector;
                                      indent_Level     : in out Positive;
                                      ada_Source       : in out uString)
    is
@@ -71,10 +71,10 @@ is
       loop
          dlog ("Translating declaration: " & Each.all'Image);
 
-         if Each.all in model.Declaration.of_variable.item'Class
+         if Each.all in parser_Model.Declaration.of_variable.item'Class
          then
             declare
-               Variable : constant model.Declaration.of_variable.view := Model.Declaration.of_variable.view (Each);
+               Variable : constant parser_Model.Declaration.of_variable.view := parser_Model.Declaration.of_variable.view (Each);
             begin
                add (Indent);
                add (Variable.Identifier);
@@ -99,7 +99,7 @@ is
 
 
 
-   procedure translate_Statements (the_Statements : in     model.Statement.vector;
+   procedure translate_Statements (the_Statements : in     parser_Model.Statement.vector;
                                    indent_Level   : in out Positive;
                                    ada_Source     : in out uString)
    is
@@ -116,11 +116,11 @@ is
       loop
          dlog ("Translating statement: " & Each.all'Image);
 
-         if Each.all in model.Statement.call.item'Class
+         if Each.all in parser_Model.Statement.call.item'Class
          then
             declare
-               Call : constant model.Statement.call.view    := Model.Statement.Call.view (Each);
-               Args :          model.Expression.vector renames Call.Arguments;
+               Call : constant parser_Model.Statement.call.view    := parser_Model.Statement.Call.view (Each);
+               Args :          parser_Model.Expression.vector renames Call.Arguments;
             begin
                if Call.Name = "log"
                then
@@ -140,7 +140,7 @@ is
                      for i in 2 .. Integer (Args.Length)
                      loop
                         declare
-                           Arg : constant model.Expression.view := Args (i);
+                           Arg : constant parser_Model.Expression.view := Args (i);
                         begin
                            add (" & ");
 
@@ -195,7 +195,7 @@ is
                         for i in 1 .. Integer (Args.Length)
                         loop
                            declare
-                              Arg : constant model.Expression.view := Args (i);
+                              Arg : constant parser_Model.Expression.view := Args (i);
                            begin
                               for Each of Arg.Tokens
                               loop
@@ -211,10 +211,10 @@ is
             end;
 
 
-         elsif Each.all in model.Statement.for_Loop.item'Class
+         elsif Each.all in parser_Model.Statement.for_Loop.item'Class
          then
             declare
-               for_Loop : constant Model.Statement.for_loop.view := Model.Statement.for_loop.view (Each);
+               for_Loop : constant parser_Model.Statement.for_loop.view := parser_Model.Statement.for_loop.view (Each);
             begin
                add (Indent & "for " & for_Loop.Variable & " in " & for_Loop.Lower & " .. " & for_Loop.Upper & NL);
                add (Indent & "loop" & NL);
@@ -226,18 +226,18 @@ is
             end;
 
 
-         elsif Each.all in model.Statement.a_null.item'Class
+         elsif Each.all in parser_Model.Statement.a_null.item'Class
          then
             indent_Level := indent_Level + 1;
             add (Indent & "null;" & NL);
             indent_Level := indent_Level - 1;
 
 
-         elsif Each.all in model.Statement.a_raise.item'Class
+         elsif Each.all in parser_Model.Statement.a_raise.item'Class
          then
             declare
-               use asl2ada.Model;
-               the_Raise : constant Model.Statement.a_raise.view := Model.Statement.a_raise.view (Each);
+               use asl2ada.parser_Model;
+               the_Raise : constant parser_Model.Statement.a_raise.view := parser_Model.Statement.a_raise.view (Each);
             begin
                indent_Level := indent_Level + 1;
                add (Indent);
@@ -292,7 +292,7 @@ is
 
 
 
-   function translate_Applet (the_Applet : in Model.Unit.asl_Applet.view) return String
+   function translate_Applet (the_Applet : in parser_Model.Unit.asl_Applet.view) return String
    is
       use type ada.Containers.Count_type;
 
@@ -374,7 +374,7 @@ is
 
 
 
-   function translate_Class (the_Unit : in Model.Unit.view) return String
+   function translate_Class (the_Unit : in parser_Model.Unit.view) return String
    is
       ada_Source :   uString;
 
@@ -392,7 +392,7 @@ is
 
 
 
-   function translate_Module (the_Unit : in Model.Unit.view) return String
+   function translate_Module (the_Unit : in parser_Model.Unit.view) return String
    is
       ada_Source : uString;
 
@@ -413,8 +413,8 @@ is
 
    function to_applet_spec_Ada_Source (Source : in String;   unit_Name : in String) return String
    is
-      the_Unit   : constant asl2ada.Model.Unit.view    := asl2ada.Parser.to_Unit (Source, unit_Name, Parser.Applet);
-      the_Applet : constant model.Unit.asl_Applet.view := model.Unit.asl_Applet.view (the_Unit);
+      the_Unit   : constant asl2ada.parser_Model.Unit.view    := asl2ada.Parser.to_Unit (Source, unit_Name, Parser.Applet);
+      the_Applet : constant parser_Model.Unit.asl_Applet.view := parser_Model.Unit.asl_Applet.view (the_Unit);
       ada_Source :          unbounded_String;
 
       use type ada.Containers.Count_type;
@@ -471,8 +471,8 @@ is
 
    function to_applet_body_Ada_Source (Source : in String;   unit_Name : in String) return String
    is
-      the_Unit   : constant asl2ada.Model.Unit.view    := asl2ada.Parser.to_Unit (Source, unit_Name, Parser.Applet);
-      the_Applet : constant model.Unit.asl_Applet.view := model.Unit.asl_Applet.view (the_Unit);
+      the_Unit   : constant asl2ada.parser_Model.Unit.view    := asl2ada.Parser.to_Unit (Source, unit_Name, Parser.Applet);
+      the_Applet : constant parser_Model.Unit.asl_Applet.view := parser_Model.Unit.asl_Applet.view (the_Unit);
       ada_Source :          unbounded_String;
 
       use type ada.Containers.Count_type;
@@ -531,7 +531,7 @@ is
 
    function to_applet_launch_Ada_Source (Source : in String;   unit_Name : in String) return String
    is
-      the_Unit   : constant asl2ada.Model.Unit.view := asl2ada.Parser.to_Unit (Source, unit_Name, Parser.Applet);
+      the_Unit   : constant asl2ada.parser_Model.Unit.view := asl2ada.Parser.to_Unit (Source, unit_Name, Parser.Applet);
       ada_Source :          unbounded_String;
 
       use type ada.Containers.Count_type;
