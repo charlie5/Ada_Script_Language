@@ -50,6 +50,18 @@
 							"subViews": [
 								{
 									"_type": "LabelView",
+									"_id": "AAAAAAGKijNNkNGnasA=",
+									"_parent": {
+										"$ref": "AAAAAAGKQK5cG9EIe64="
+									},
+									"font": "Arial;13;0",
+									"left": 410,
+									"top": 197,
+									"width": 41.18994140625,
+									"height": 13
+								},
+								{
+									"_type": "LabelView",
 									"_id": "AAAAAAGKSkjEic5jD2Q=",
 									"_parent": {
 										"$ref": "AAAAAAGKQK5cG9EIe64="
@@ -352,9 +364,9 @@
 									"font": "Arial;13;0",
 									"left": 402,
 									"top": 939,
-									"width": 58.03662109375,
+									"width": 58.53173828125,
 									"height": 13,
-									"text": "Translator",
+									"text": "Generator",
 									"wordWrap": true
 								},
 								{
@@ -366,14 +378,14 @@
 									"font": "Arial;13;0",
 									"left": 402,
 									"top": 912,
-									"width": 58.03662109375,
+									"width": 58.53173828125,
 									"height": 13
 								}
 							],
 							"font": "Arial;13;0",
 							"left": 392,
 							"top": 907,
-							"width": 78.03662109375,
+							"width": 78.53173828125,
 							"height": 59,
 							"nameLabel": {
 								"$ref": "AAAAAAGKQLSB8tGazlA="
@@ -392,6 +404,18 @@
 								"$ref": "AAAAAAGKQLVcOtHrNRM="
 							},
 							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGKijNNkdHGE+8=",
+									"_parent": {
+										"$ref": "AAAAAAGKQLVcO9HtJJw="
+									},
+									"font": "Arial;13;0",
+									"left": 410,
+									"top": 1090,
+									"width": 41.18994140625,
+									"height": 13
+								},
 								{
 									"_type": "LabelView",
 									"_id": "AAAAAAGKSkjEi86BAzA=",
@@ -825,7 +849,7 @@
 					"_parent": {
 						"$ref": "AAAAAAGKQK2BjNEB2YQ="
 					},
-					"name": "Translator",
+					"name": "Generator",
 					"ownedElements": [
 						{
 							"_type": "DFDDataFlow",
