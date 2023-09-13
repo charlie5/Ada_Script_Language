@@ -218,9 +218,11 @@ Compilation Units
 
 
 - Class:  'animal.spec' & 'animal.body'.
--   Forge:
--   Attributes:
--   Operations:
+-   Types:         Class related type declarations.
+-   Forge:         Constructors and destructors.
+-   Attributes:    Class members    (static  and derived).
+-   Operations:    Class operations (virtual and class-wide).
+-   Others:        Utility subprograms.
 -   open:          Translates to the procedural section at the end of an Ada package body. Optional.
 -   close:         Translates to the 'Finalise' procedure of a controlled type. Optional.
 
@@ -235,7 +237,7 @@ Compilation Units
 
 
 - Package: 'gui.ads' & 'gui.adb'.
--   A standard Ada package.
+-   A regular Ada package.
 
 
 
@@ -310,9 +312,6 @@ Exceptions
 ~~~~~~~~~~
 
 - May contain data like an Ada 'record'.
-- Use an Ada exception and render the record data as the exceptions message string using JSON.
-- In the handler, create the error record and initialise it by parsing the JSON.
-- Or, instead of JSON, use unchecked_Conversion from error type to String, in the raise, and back again in the handler.
 
 
 Examples:
