@@ -241,7 +241,6 @@ Compilation Units
 
 
 
-
 ________
 Generics
 ~~~~~~~~
@@ -373,6 +372,7 @@ Misc
 - '~=' is used to denote case insensitive equality for Text and Strings.
 - Swap assignment:   A, B, C := C, A, B;
 - Parameterised 'Image attributes.
+- Redefine access types images using 'put_Image' to give the image of the de-referenced object.
 
 
 
@@ -430,3 +430,29 @@ Official Libraries
 - asl.GUI
 - asl.Math
 - asl.?
+
+
+
+___________
+Persistence
+~~~~~~~~~~~
+- Levels:
+     - Local  (in folder which program is run from).
+     - User   (in users home folder).
+     - System (in /var/asl/<applet_name>).
+     
+     
+     
+___
+GUI
+~~~
+- Use interfaces implement by imgui ?
+
+
+
+______________
+GPU Processing
+~~~~~~~~~~~~~~
+- Using openGL or Vulkan or openCL ?
+- ASL generates openGL shaders from ASL source code.
+- How to specify GPU code ?
