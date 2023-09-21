@@ -2,6 +2,7 @@ with
      asl2ada.parser_Model.Unit.asl_Applet,
      asl2ada.parser_Model.Call,
      asl2ada.parser_Model.Expression,
+     asl2ada.parser_Model.Declaration.of_exception,
      asl2ada.parser_Model.Declaration.of_variable,
      asl2ada.parser_Model.Statement.call,
      asl2ada.parser_Model.Statement.for_loop,
@@ -156,17 +157,31 @@ is
          begin
             if Current.Kind = identifier_Token
             then
-               declare
-                  use parser_Model.Declaration.of_variable.Forge;
-                  Variable : constant parser_Model.Declaration.of_variable.view := new_variable_Declaration (Identifier => +Current.Identifier);
-               begin
-                  i := i + 1;     -- Move to next token.
-                  i := i + 1;     -- Skip colon token.
-                  dlog (Current'Image);
-                  Variable.Type_is (+Current.Identifier);
+               if Next (2).Kind = exception_Token
+               then
+                  declare
+                     use parser_Model.Declaration.of_exception.Forge;
+                     the_Exception : constant parser_Model.Declaration.of_exception.view := new_exception_Declaration (Identifier => +Current.Identifier);
+                  begin
+                     i := i + 1;     -- Skip colon token.
+                     dlog (Current'Image);
+                     Result.append (parser_Model.Declaration.view (the_Exception));
+                  end;
 
-                  Result.append (parser_Model.Declaration.view (Variable));
-               end;
+               else     -- Is a variable.
+                  declare
+                     use parser_Model.Declaration.of_variable.Forge;
+                     Variable : constant parser_Model.Declaration.of_variable.view := new_variable_Declaration (Identifier => +Current.Identifier);
+                  begin
+                     i := i + 1;     -- Move to next token.
+                     i := i + 1;     -- Skip colon token.
+                     dlog (Current'Image);
+
+                     Variable.Type_is (+Current.Identifier);
+
+                     Result.append (parser_Model.Declaration.view (Variable));
+                  end;
+               end if;
 
                i := i + 1;        -- Skip semicolon.
             end if;

@@ -4,12 +4,15 @@ with
 
      asl2ada.parser_Model.Unit.asl_Applet,
      asl2ada.parser_Model.Expression,
+     asl2ada.parser_Model.Declaration.of_exception,
      asl2ada.parser_Model.Declaration.of_variable,
      asl2ada.parser_Model.Statement.call,
      asl2ada.parser_Model.Statement.block,
      asl2ada.parser_Model.Statement.for_loop,
      asl2ada.parser_Model.Statement.a_null,
      asl2ada.parser_Model.Statement.a_raise,
+
+     asl2ada.Generator,
 
      ada.Strings.unbounded;
 
@@ -80,6 +83,19 @@ is
                add (Variable.Identifier);
                add (" : ");
                add (Variable.my_Type);
+               add (";");
+               new_Line;
+            end;
+
+         elsif Each.all in parser_Model.Declaration.of_exception.item'Class
+         then
+            declare
+               the_Exception : constant parser_Model.Declaration.of_exception.view := parser_Model.Declaration.of_exception.view (Each);
+            begin
+               add (Indent);
+               add (the_Exception.Identifier);
+               add (" : ");
+               add ("exception");
                add (";");
                new_Line;
             end;
