@@ -20,8 +20,10 @@ is
    subtype Vector  is Vectors.Vector;
 
 
-   --  function Raises (Self : in Item) return an_Exception.view;
-   function Raises (Self : in Item) return Identifier;
+   function  Raises (Self : in Item) return Identifier;
+   function  Values (Self : in Item) return Strings;
+
+   procedure add (Self : in out Item;   Value : in String);
 
 
 
@@ -31,6 +33,7 @@ private
       record
          --  Raises : an_Exception.view;
          Raises : uString;
+         Values : Strings;
       end record;
 
 

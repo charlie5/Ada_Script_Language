@@ -11,6 +11,7 @@ with
      asl2ada.parser_Model.Statement.for_loop,
      asl2ada.parser_Model.Statement.a_null,
      asl2ada.parser_Model.Statement.a_raise,
+     asl2ada.parser_Model.DB,
 
      asl2ada.Generator,
 
@@ -93,10 +94,56 @@ is
                the_Exception : constant parser_Model.Declaration.of_exception.view := parser_Model.Declaration.of_exception.view (Each);
             begin
                add (Indent);
-               add (the_Exception.Identifier);
+               add (the_Exception.Name);
                add (" : ");
                add ("exception");
                add (";");
+               new_Line;
+
+               if the_Exception.is_Extended
+               then
+                  new_Line;
+                  add (Indent);
+                  add ("type ");
+                  add (the_Exception.Name);
+                  add ("_Data is");
+                  new_Line;
+                  add (Indent);
+                  add ("   record");
+
+                  for Each of the_Exception.Components
+                  loop
+                     new_Line;
+                     add (Indent);
+                     add ("      ");
+                     add (Each.Identifier);
+                     add (" : ");
+                     add (Each.my_Type);
+                     add (";");
+                  end loop;
+
+                  new_Line;
+                  add (Indent);
+                  add ("   end record;");
+               end if;
+
+
+               new_Line;
+               new_Line;
+               add (Indent);
+               add ("package ");
+               add (the_Exception.Name);
+               add ("_Conversions is new system.Address_to_Access_conversions (");
+               add (the_Exception.Name);
+               add ("_Data");
+               add (");");
+
+               new_Line;
+               add (Indent);
+               add ("subtype ");
+               add (the_Exception.Name & "_Data_view");
+               add ("   is ");
+               add (the_Exception.Name & "_Conversions.Object_pointer;");
                new_Line;
             end;
 
@@ -109,8 +156,14 @@ is
    end translate_Declarations;
 
 
+   --  type gl_Error_Data is
+   --     record
+   --        Code : Integer;
+   --        Name : unbounded_String;
+   --     end record;
 
-
+   --  package gl_Error_Conversions is new system.Address_to_Access_conversions (gl_Error_Data);
+   --  subtype gl_Error_Data_view   is gl_Error_Conversions.Object_pointer;
 
 
 
@@ -252,17 +305,101 @@ is
          elsif Each.all in parser_Model.Statement.a_raise.item'Class
          then
             declare
-               use asl2ada.parser_Model;
-               the_Raise : constant parser_Model.Statement.a_raise.view := parser_Model.Statement.a_raise.view (Each);
+               use      asl2ada.parser_Model;
+               use type asl2ada.parser_Model.Declaration.of_variable.view;
+
+               the_Raise     : constant parser_Model.Statement.a_raise.view        := parser_Model.Statement.a_raise.view (Each);
+               the_Exception : constant parser_Model.Declaration.of_exception.view := parser_Model.DB.fetch (+the_Raise.Raises);
             begin
-               indent_Level := indent_Level + 1;
-               add (Indent);
-               add ("raise ");
-               add (+the_Raise.Raises);
-               add (";");
-               new_Line;
-               indent_Level := indent_Level - 1;
+               if the_Exception.is_Extended
+               then
+                  indent_Level := indent_Level + 1;
+
+                  add (Indent);
+                  add ("declare");
+                  new_Line;
+
+                  add (Indent);
+                  add ("   the_");
+                  add (the_Exception.Name & "_Data");
+                  add ("         : constant ");
+                  add (the_Exception.Name);
+                  add ("_Data_view := new ");
+                  add (the_Exception.Name & "_Data");
+
+                  add ("' (");
+                  declare
+                     i : Natural := 0;
+                  begin
+                     for Component of the_Exception.Components
+                     loop
+                        i := i + 1;
+                        add (Component.Identifier);
+                        add (" => ");
+                        add (the_Raise.Values.Element (i));
+
+                        if Component /= the_Exception.Components.last_Element
+                        then
+                           add (",");
+                           new_Line;
+                           add (Indent);
+                           add ("                                                                                  ");
+                        end if;
+                     end loop;
+                  end;
+                  add (");");
+
+                  new_Line;
+                  add (Indent);
+                  add ("   the_" & the_Exception.Name & "_Data_address : constant system.Address     := the_" & the_Exception.Name & "_Data.all'Address;");
+
+                  new_Line;
+                  add (Indent);
+                  add ("   the_" & the_Exception.Name & "_Data_string  : constant address_Buffer     := to_Buffer (the_" & the_Exception.Name & "_Data_address);");
+
+                  new_Line;
+                  add (Indent);
+                  add ("begin");
+                  new_Line;
+
+                  add (Indent);
+                  add ("   raise ");
+                  add (the_Exception.Name);
+                  add (" with ");
+                  add ("the_" & the_Exception.Name & "_Data_string");
+                  add (";");
+
+                  new_Line;
+                  add (Indent);
+                  add ("end;");
+                  new_Line;
+
+                  indent_Level := indent_Level - 1;
+
+               else
+                  indent_Level := indent_Level + 1;
+                  add (Indent);
+                  add ("raise ");
+                  add (+the_Raise.Raises);
+                  add (";");
+                  new_Line;
+                  indent_Level := indent_Level - 1;
+               end if;
             end;
+
+
+
+            --  declare
+            --     the_gl_Error_Data         : constant gl_Error_Data_view := new gl_Error_Data' (Code => 5,
+            --                                                                                    Name => to_unbounded_String ("Invalid context."));
+            --     the_gl_Error_Data_address : constant system.Address     := the_gl_Error_Data.all'Address;
+            --     the_gl_Error_Data_string  : constant address_Buffer     := to_Buffer (the_gl_Error_Data_address);
+            --  begin
+            --     raise gl_Error with the_gl_Error_Data_string;
+            --  end;
+
+
+
 
 
          else     -- Assume raw Ada.
@@ -461,6 +598,9 @@ is
          end loop;
       end if;
 
+      new_Line;
+      add ("with System.Address_to_Access_conversions;");
+
 
       new_Line;
       new_Line;
@@ -562,7 +702,14 @@ is
    begin
       --  dlog ("Translating '" & unit_Name & "' " & to_Lower (of_Kind'Image) & ".");
 
+      add ("with");
+      add ("     ada.unchecked_Deallocation,");
       new_Line;
+      add ("     ada.Exceptions,");
+      new_Line;
+      add ("     Asl_Ada.core;");
+      new_Line;
+
       new_Line;
       add ("procedure " & applet_Package_Name & ".launch" & NL);
       add ("is"                                           & NL);
@@ -572,6 +719,41 @@ is
       add ("   " & applet_Package_Name & ".close;"        & NL);
       new_line;
       add ("exception"                                    & NL);
+
+      for Each of parser_Model.DB.fetch_Exceptions
+      loop
+         if Each.is_Extended
+         then
+            add ("   when E : " & Each.Name & " => ");
+            new_Line;
+            add ("      declare");
+            new_Line;
+            add ("         use Asl_Ada.core;");
+            new_Line;
+
+            add ("         procedure deallocate is new ada.unchecked_Deallocation (");
+            add (Each.Name & "_Data, " & Each.Name & "_Data_view);");
+            new_Line;
+            new_Line;
+            add ("         Buffer   : constant address_Buffer     := ada.Exceptions.exception_Message (E);");
+            new_Line;
+            add ("         Address  : constant system.Address     := to_Address (Buffer);");
+            new_Line;
+            add ("         " & Each.Name & " :          " & Each.Name & "_Data_view := " & Each.Name & "_Conversions.to_Pointer (Address);");
+
+
+            new_Line;
+            add ("      begin");
+            new_Line;
+            add ("         raise " & applet_Package_Name & "." & Each.Name & " with " & Each.Name & ".all'Image;");
+            new_Line;
+            add ("      end;");
+            new_Line;
+            new_Line;
+         end if;
+      end loop;
+
+
       add ("   when others => raise;"                     & NL);
       add ("end " & applet_Package_Name & ".launch;"      & NL);
 

@@ -322,7 +322,7 @@ Examples:
   end Foo;
 
 
-- raise Foo (I => 5,
+- raise Foo (I =>  5,
              J => 'x');
 
 

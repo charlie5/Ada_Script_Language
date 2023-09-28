@@ -311,7 +311,7 @@ is
 
             elsif Current.Kind = raise_Token
             then
-               log (+Next.Identifier);
+               dlog (+Next.Identifier);
 
                declare
                   use parser_Model,
@@ -324,7 +324,7 @@ is
 
 
             else
-               log ("KKKKKKKKKKKKKKKK " & Current'Image);
+               dlog ("KKKKKKKKKKKKKKKK " & Current'Image);
                declare
                   Statement : parser_Model.Statement.view := new parser_Model.Statement.item;
                begin

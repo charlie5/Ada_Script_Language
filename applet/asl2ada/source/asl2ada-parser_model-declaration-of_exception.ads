@@ -1,5 +1,5 @@
 with
-     asl2ada.parser_Model.Expression,
+     asl2ada.parser_Model.Declaration.of_Variable,
      ada.Containers.Vectors;
 
 
@@ -11,7 +11,7 @@ is
 
    package Forge
    is
-      function new_exception_Declaration (Identifier : in String) return View;
+      function new_exception_Declaration (Name : in String) return View;
    end Forge;
 
 
@@ -19,7 +19,11 @@ is
    subtype Vector  is Vectors.Vector;
 
 
-   function  Identifier  (Self : in     Item) return String;
+   function  Name        (Self : in     Item) return String;
+   function  is_Extended (Self : in     Item) return Boolean;
+   function  Components  (Self : in     Item) return Declaration.of_Variable.Vector;
+
+   procedure add (Self : in out Item;   the_Component : in Declaration.of_variable.view);
 
 
 
@@ -27,7 +31,8 @@ private
 
    type Item is new Declaration.item with
       record
-         Identifier : uString;
+         Name       : uString;
+         Components : Declaration.of_Variable.Vector;
       end record;
 
 

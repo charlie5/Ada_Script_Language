@@ -8,6 +8,7 @@ with
      asl2ada.parser_Model.Statement.for_loop,
      asl2ada.parser_Model.Statement.a_null,
      asl2ada.parser_Model.Statement.a_raise,
+     asl2ada.parser_Model.DB,
 
      asl2ada.Lexer,
      asl2ada.Token,
@@ -161,11 +162,47 @@ is
                then
                   declare
                      use parser_Model.Declaration.of_exception.Forge;
-                     the_Exception : constant parser_Model.Declaration.of_exception.view := new_exception_Declaration (Identifier => +Current.Identifier);
+                     the_Exception : constant parser_Model.Declaration.of_exception.view := new_exception_Declaration (Name => +Current.Identifier);
                   begin
                      i := i + 1;     -- Skip colon token.
                      dlog (Current'Image);
+
+                     if Next (2).Kind = is_Token
+                     then     -- Extended exception.
+                        i := i + 2;
+                        dlog ("CURR:" & Current'Image);
+
+                        i := i + 1;
+
+                        while Current.Kind /= end_Token
+                        loop
+                           --  i := i + 1;
+
+                           dlog ("CURR2:" & Current'Image);
+                           declare
+                              use parser_Model.Declaration.of_variable.Forge;
+                              Component : constant parser_Model.Declaration.of_variable.view := new_variable_Declaration (Identifier => +Current.Identifier);
+                           begin
+                              --  i := i + 1;     -- Move to next token.
+                              i := i + 2;     -- Skip colon token.
+                              dlog ("Exception component:" & Current'Image);
+
+                              Component.Type_is (+Current.Identifier);
+
+                              the_Exception.add (Component);
+                              i := i + 2;
+                              dlog ("CURR3:" & Current'Image);
+                           end;
+                        end loop;
+                     end if;
+
                      Result.append (parser_Model.Declaration.view (the_Exception));
+
+                     if not parser_Model.DB.contains_Exception (Named => the_Exception.Name)     -- HACK !
+                     then
+                        dlog ("ADDING EXCEPTION: " & the_Exception.Name);
+                        parser_Model.DB.add (the_Exception);
+                     end if;
                   end;
 
                else     -- Is a variable.
@@ -204,6 +241,10 @@ is
       Result : parser_Model.Statement.vector;
 
    begin
+      dlog (2);
+      dlog ("Parsing statements ...");
+      dlog;
+
       while i <= Integer (Tokens.Length)
       loop
          dlog ("parse_Statements ~ " & Tokens (i).Kind'Image);
@@ -237,7 +278,7 @@ is
             then
                declare
                   use parser_Model.Statement.Call.Forge;
-                  Call : parser_Model.Statement.Call.view := new_Call_Statement (Name => +Current.Identifier);
+                  Call : constant parser_Model.Statement.Call.view := new_Call_Statement (Name => +Current.Identifier);
                begin
                   i := i + 1;
 
@@ -280,7 +321,7 @@ is
             then
                declare
                   use parser_Model.Statement.for_loop.Forge;
-                  for_Statement   : parser_Model.Statement.for_loop.view := new_for_loop_Statement (Variable => +Next.Identifier);
+                  for_Statement   : constant parser_Model.Statement.for_loop.view := new_for_loop_Statement (Variable => +Next.Identifier);
                   loop_Statements : parser_Model.Statement.vector;
                begin
                   i := i + 3;     -- Skip 'for', 'identifier' and 'in' tokens.
@@ -305,9 +346,10 @@ is
             elsif Current.Kind = null_Token
             then
                dlog ("Null token ~ i:" & i'Image);
+
                declare
                   use parser_Model.Statement.a_null.Forge;
-                  null_Statement : parser_Model.Statement.a_null.view := new_null_Statement;
+                  null_Statement : constant parser_Model.Statement.a_null.view := new_null_Statement;
                begin
                   i := i + 2;     -- Skip 'null' and ';' tokens.
                   Result.append (parser_Model.Statement.view (null_Statement));
@@ -326,22 +368,60 @@ is
 
             elsif Current.Kind = raise_Token
             then
-               log (+Next.Identifier);
+               dlog;
+               dlog ("Exception identifier: " & (+Next.Identifier));
 
                declare
                   use parser_Model,
                       parser_Model.Statement.a_raise.Forge;
-                  raise_Statement : parser_Model.Statement.a_raise.view := new_raise_Statement (Raises => +Next.Identifier);
+
+                  raise_Statement : constant parser_Model.Statement.a_raise.view := new_raise_Statement (Raises => +Next.Identifier);
                begin
-                  i := i + 3;     -- Skip Identifier and ';' tokens.
+                  --  i := i + 3;     -- Skip Identifier and ';' tokens.
+                  i := i + 2;     -- Skip Identifier and ';' tokens.
+                  --  i := i + 1;
+
+                  --  while Current.Kind /= semicolon_Token
+                  while Current.Kind /= right_parenthesis_Token
+                  loop
+                     i := i + 3;
+                     --  i := i + 2;
+
+                     if Current.Kind = integer_literal_Token
+                     then
+                        dlog ("Adding integer literal value.");
+                        raise_Statement.add (Current.integer_Value'Image);
+                        i := i + 1;
+
+                     elsif Current.Kind = character_literal_Token
+                     then
+                        dlog ("Adding character literal value.");
+                        raise_Statement.add (Current.character_Value'Image);
+                        i := i + 1;
+
+                     else
+                        raise program_Error with "Unhandled token kind ~ '" & Current.Kind'Image & "'.";
+                     end if;
+
+                     dlog ("Current.Kind: " & Current.Kind'Image);
+                  end loop;
+
+                  --  if Current.Kind /= semicolon_Token
+                  --  then   -- Extended exception.
+                  --     i := i + 3;
+                  --     raise_Statement.add (Current.integer_Value'Image);
+                  --  end if;
+
+                  i := i + 1;
                   Result.append (parser_Model.Statement.view (raise_Statement));
                end;
 
 
-            else
-               log ("KKKKKKKKKKKKKKKK " & Current'Image);
+            else   -- Assume raw Ada.
+               dlog ("Raw ada: " & Current'Image);
+
                declare
-                  Statement : parser_Model.Statement.view := new parser_Model.Statement.item;
+                  Statement : constant parser_Model.Statement.view := new parser_Model.Statement.item;
                begin
                   while Current.Kind /= semicolon_Token
                   loop
@@ -377,8 +457,8 @@ is
 
       Errors        :          asl2ada.Error.items;
       Errors_found  :          Boolean                            := False;
-      Tokens        :          Token.vector                       := Lexer.to_Tokens (Source, Errors);
-      applet_Tokens :          Lexer.applet_Tokens                := Lexer.to_applet_Tokens (Tokens, unit_Name);
+      Tokens        : constant Token.vector                       := Lexer.to_Tokens (Source, Errors);
+      applet_Tokens : constant Lexer.applet_Tokens                := Lexer.to_applet_Tokens (Tokens, unit_Name);
       Result        : constant asl2ada.parser_Model.Unit.asl_Applet.view := new asl2ada.parser_Model.Unit.asl_Applet.item;
 
    begin

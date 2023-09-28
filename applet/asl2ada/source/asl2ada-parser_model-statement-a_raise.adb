@@ -26,19 +26,27 @@ is
 
 
 
-   --  function Raises (Self : in Item) return an_Exception.view
-   --  is
-   --  begin
-   --     return Self.Raises;
-   --  end Raises;
-
-
-
    function Raises (Self : in Item) return Identifier
    is
    begin
       return +Self.Raises;
    end Raises;
+
+
+
+   function Values (Self : in Item) return Strings
+   is
+   begin
+      return Self.Values;
+   end Values;
+
+
+
+   procedure add (Self : in out Item;   Value : in String)
+   is
+   begin
+      Self.Values.append (Value);
+   end add;
 
 
 end asl2ada.parser_Model.Statement.a_raise;
