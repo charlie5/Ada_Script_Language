@@ -740,12 +740,15 @@ is
             add ("         Address  : constant system.Address     := to_Address (Buffer);");
             new_Line;
             add ("         " & Each.Name & " :          " & Each.Name & "_Data_view := " & Each.Name & "_Conversions.to_Pointer (Address);");
-
+            new_Line;
+            add ("         Message  : constant String             := " & Each.Name & ".all'Image;");
 
             new_Line;
             add ("      begin");
             new_Line;
-            add ("         raise " & applet_Package_Name & "." & Each.Name & " with " & Each.Name & ".all'Image;");
+            add ("         deallocate (" & Each.Name & ");");
+            new_Line;
+            add ("         raise " & applet_Package_Name & "." & Each.Name & " with Message;");
             new_Line;
             add ("      end;");
             new_Line;
@@ -754,7 +757,8 @@ is
       end loop;
 
 
-      add ("   when others => raise;"                     & NL);
+      add ("   when others => "                           & NL);
+      add ("      raise;"                                 & NL);
       add ("end " & applet_Package_Name & ".launch;"      & NL);
 
       return +ada_Source;
