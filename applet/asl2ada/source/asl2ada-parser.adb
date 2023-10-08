@@ -469,6 +469,8 @@ is
       Result        : constant asl2ada.parser_Model.Unit.asl_Applet.view := new asl2ada.parser_Model.Unit.asl_Applet.item;
 
    begin
+      dlog ("__________________________");
+      dlog ("Entering the applet parser ~ Unit: " & unit_Name);
       dlog (applet_Tokens'Image);
 
 
@@ -617,18 +619,68 @@ is
 
       parse_do_Block:
       declare
-         Tokens     : Token.vector renames applet_Tokens.do_Block;
-         i          : Positive          := 1;
-         Statements : parser_Model.Statement.vector;
+         block_Tokens : lexer.block_Tokens := to_block_Tokens (applet_Tokens.do_Block);
+
       begin
-         --  i := 1;
-         --  log (Tokens.Length'Image);
+         parse_block_Declarations:
+         declare
+            Tokens     : Token.vector renames block_Tokens.Declarations;
+            i          : Positive          := 1;
+            Statements : parser_Model.Statement.vector;
+         begin
+            --  i := 1;
+            log ("parser.parse_Applet.parse_do_block_Declarations length:" & Tokens.Length'Image);
+            log ("parse_block_Declarations:       " & Tokens'Image);
+            dlog (2);
 
-         i := i + 1;     -- Skip the 'is'    token.
-         i := i + 1;     -- Skip the 'begin' token.
+            i := i + 1;     -- Skip the 'is'    token.
+            i := i + 1;     -- Skip the 'begin' token.
 
-         Statements := parse_Statements (Tokens, i);
-         Result.do_Block.Statements_are (Statements);
+            --  Statements := parse_Statements (Tokens, i);
+            Result.do_Block.Statements_are (Statements);
+         end parse_block_Declarations;
+
+
+         parse_block_Statements:
+         declare
+            Tokens     : Token.vector renames block_Tokens.Statements;
+            i          : Positive          := 1;
+            Statements : parser_Model.Statement.vector;
+         begin
+            --  i := 1;
+            --  log (Tokens.Length'Image);
+            log ("parse_do_block_Statements length:" & Tokens.Length'Image);
+            log ("parse_do_block_Statements:       " & Tokens'Image);
+            dlog (2);
+
+            i := i + 1;     -- Skip the 'is'    token.
+            i := i + 1;     -- Skip the 'begin' token.
+
+            Statements := parse_Statements (Tokens, i);
+            Result.do_Block.Statements_are (Statements);
+         end parse_block_Statements;
+
+
+         parse_block_Handlers:
+         declare
+            Tokens     : Token.vector renames block_Tokens.Handlers;
+            i          : Positive          := 1;
+            Statements : parser_Model.Statement.vector;
+         begin
+            --  i := 1;
+            --  log (Tokens.Length'Image);
+            log ("parse_do_block_Handlers length:" & Tokens.Length'Image);
+            log ("parse_do_block_Handlers:       " & Tokens'Image);
+            dlog (2);
+
+            i := i + 1;     -- Skip the 'is'    token.
+            i := i + 1;     -- Skip the 'begin' token.
+
+            --  Statements := parse_Statements (Tokens, i);
+            Result.do_Block.Statements_are (Statements);
+         end parse_block_Handlers;
+
+
       end parse_do_Block;
 
 
