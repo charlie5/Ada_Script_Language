@@ -6,6 +6,7 @@ with
      asl2ada.parser_Model.Expression,
      asl2ada.parser_Model.Declaration.of_exception,
      asl2ada.parser_Model.Declaration.of_variable,
+     asl2ada.parser_Model.Handler,
      asl2ada.parser_Model.Statement.call,
      asl2ada.parser_Model.Statement.block,
      asl2ada.parser_Model.Statement.for_loop,
@@ -31,8 +32,9 @@ is
    procedure add_with_of_Asl_Ada_Core (to_Source : in out unbounded_String)
    is
    begin
-      insert (to_Source, before   => 1,
-                         new_Item => "with Asl_Ada.core;   use Asl_Ada.core;" & NL);
+      insert (to_Source,
+              before   => 1,
+              new_Item => "with Asl_Ada.core;   use Asl_Ada.core;" & NL);
    end add_with_of_Asl_Ada_Core;
 
 
@@ -40,8 +42,9 @@ is
    procedure add_with_of_Gnat_formatted_String (to_Source : in out unbounded_String)
    is
    begin
-      insert (to_Source, before   => 1,
-                         new_Item => "with gnat.formatted_String;" & NL);
+      insert (to_Source,
+              before   => 1,
+              new_Item => "with gnat.formatted_String;" & NL);
    end add_with_of_Gnat_formatted_String;
 
 
@@ -49,13 +52,30 @@ is
    procedure add_with_of_Ada_Text_IO (to_Source : in out unbounded_String)
    is
    begin
-      insert (to_Source, before   => 1,
-                         new_Item => "with ada.Text_IO;" & NL);
+      insert (to_Source,
+              before   => 1,
+              new_Item => "with ada.Text_IO;" & NL);
    end add_with_of_Ada_Text_IO;
 
 
 
+   procedure add_with_of_Ada_unchecked_Deallocation (to_Source : in out unbounded_String)
+   is
+   begin
+      insert (to_Source,
+              before   => 1,
+              new_Item => "with ada.unchecked_Deallocation;" & NL);
+   end add_with_of_Ada_unchecked_Deallocation;
 
+
+
+   procedure add_with_of_Ada_Exceptions (to_Source : in out unbounded_String)
+   is
+   begin
+      insert (to_Source,
+              before   => 1,
+              new_Item => "with ada.Exceptions;" & NL);
+   end add_with_of_Ada_Exceptions;
 
 
 
@@ -68,7 +88,6 @@ is
       function  Indent      return String  is begin   return +indent_Level * "   ";    end Indent;
       procedure add (Fragment : in String) is begin   append (ada_Source, Fragment);   end add;
       procedure new_Line                   is begin   append (ada_Source, NL);         end new_Line;
-
 
    begin
       for Each of the_Declarations
@@ -156,16 +175,6 @@ is
    end translate_Declarations;
 
 
-   --  type gl_Error_Data is
-   --     record
-   --        Code : Integer;
-   --        Name : unbounded_String;
-   --     end record;
-
-   --  package gl_Error_Conversions is new system.Address_to_Access_conversions (gl_Error_Data);
-   --  subtype gl_Error_Data_view   is gl_Error_Conversions.Object_pointer;
-
-
 
 
    procedure translate_Statements (the_Statements : in     parser_Model.Statement.vector;
@@ -178,7 +187,6 @@ is
       function  Indent      return String  is begin   return +indent_Level * "   ";    end Indent;
       procedure add (Fragment : in String) is begin   append (ada_Source, Fragment);   end add;
       procedure new_Line                   is begin   append (ada_Source, NL);         end new_Line;
-
 
    begin
       for Each of the_Statements
@@ -445,84 +453,220 @@ is
 
 
 
-   function translate_Applet (the_Applet : in parser_Model.Unit.asl_Applet.view) return String
+   procedure translate_Handlers (the_Handlers : in     parser_Model.Handler.vector;
+                                 indent_Level : in out Positive;
+                                 ada_Source   : in out uString)
    is
-      use type ada.Containers.Count_type;
+      use Token;
 
-      ada_Source   : unbounded_String;
-      indent_Level : Natural := 0;
-
-
-      function Indent return String
-      is
-      begin
-         return +indent_Level * "   ";
-      end Indent;
-
-
-      procedure add (Fragment : in String)
-      is
-      begin
-         append (ada_Source, Fragment);
-      end add;
-
-
-      procedure new_Line
-      is
-      begin
-         append (ada_Source, NL);
-      end new_Line;
-
+      function  Indent      return String  is begin   return +indent_Level * "   ";    end Indent;
+      procedure add (Fragment : in String) is begin   append (ada_Source, Fragment);   end add;
+      procedure new_Line                   is begin   append (ada_Source, NL);         end new_Line;
 
    begin
-      if the_Applet.Context.Withs.Length > 0
-      then
-         add ("with");
-         new_Line;
+      dlog (3);
+      dlog ("translator.translate_Handlers:");
 
-         for i in 1 .. Integer (the_Applet.Context.Withs.Length)
-         loop
-            declare
-               Length    : constant Natural := Integer (the_Applet.Context.Withs.Length);
-               unit_Name : constant String  := the_Applet.Context.Withs (i);
-            begin
-               if i = Length then add ("     " & unit_Name & ";" & NL);
-                             else add ("     " & unit_Name & ",");
-               end if;
-            end;
-         end loop;
+      if the_Handlers.is_Empty
+      then
+         dlog ("translator.translate_Handlers: NO Exceptions !!!");
+         return;
       end if;
 
-
       new_Line;
       new_Line;
-      add ("procedure " & the_Applet.Name & "_Applet.launch" & NL);
-      add ("is"                                              & NL);
-      add ("begin"                                           & NL);
+      add (Indent);
+      add ("exception");
+      new_Line;
+
+      for Each of the_Handlers
+      loop
+         declare
+            the_Exception : parser_Model.Declaration.of_exception.view := parser_Model.DB.fetch (Each.Name);
+         begin
+            dlog ("Translating handler: ");
+            dlog (Each.all'Image);
+
+            indent_Level := indent_Level + 1;
+
+            if the_Exception.is_extended
+            then
+               add (Indent);
+               add ("when E : " & Each.Name & " => ");
+               new_Line;
+
+               indent_Level := indent_Level + 1;
+
+               add (Indent);
+               add ("declare");
+               new_Line;
+
+               indent_Level := indent_Level + 1;
+
+               add (Indent);
+               add ("use Asl_Ada.core;");
+               new_Line;
+
+               add (Indent);
+               add ("procedure deallocate is new ada.unchecked_Deallocation (");
+               add (Each.Name & "_Data, " & Each.Name & "_Data_view);");
+               new_Line;
+
+               new_Line;
+
+               add (Indent);
+               add ("Buffer   : constant address_Buffer     := ada.Exceptions.exception_Message (E);");
+               new_Line;
+
+               add (Indent);
+               add ("Address  : constant system.Address     := to_Address (Buffer);");
+               new_Line;
+
+               add (Indent);
+               add (Each.Name & " :          " & Each.Name & "_Data_view := " & Each.Name & "_Conversions.to_Pointer (Address);");
+               new_Line;
+               --  add ("         Message  : constant String             := " & Each.Name & ".all'Image;");
+
+               new_Line;
+
+               indent_Level := indent_Level - 1;
+
+               add (Indent);
+               add ("begin");
+               new_Line;
+
+               translate_Statements (Each.Statements,
+                                     indent_Level,
+                                     ada_Source);
+
+               indent_Level := indent_Level + 1;
+               add (Indent);
+               add ("deallocate (" & Each.Name & ");");
+               new_Line;
+               indent_Level := indent_Level - 1;
+
+               --  add ("         raise " & applet_Package_Name & "." & Each.Name & " with Message;");
+               --  new_Line;
 
 
-      translate_do_Block:
-      declare
-         --  do_Block : model.Statement.Block.view;
-      begin
-         indent_Level := indent_Level + 1;
+               add (Indent);
+               add ("end;");
+               new_Line;
+               new_Line;
 
-         add (Indent & "do_Block:" & NL);
-         add (Indent & "begin"     & NL);
+               indent_Level := indent_Level - 1;
 
-         indent_Level := indent_Level + 1;
-         translate_Statements (the_Applet.do_Block.Statements, indent_Level, ada_Source);
+            else
+               add (Indent);
+               add ("when " & Each.Name & " =>");
+               new_Line;
+
+               translate_Statements (Each.Statements,
+                                     indent_Level,
+                                     ada_Source);
+            end if;
+         end;
+
          indent_Level := indent_Level - 1;
 
-         add (Indent & "end do_Block;" & NL);
-      end translate_do_Block;
+
+         declare
+            --  Variable : constant parser_Model.Declaration.of_variable.view := parser_Model.Declaration.of_variable.view (Each);
+         begin
+            null;
+            --  add (Indent);
+            --  add (Variable.Identifier);
+            --  add (" : ");
+            --  add (Variable.my_Type);
+            --  add (";");
+            --  new_Line;
+         end;
+
+      end loop;
+   end translate_Handlers;
 
 
-      indent_Level := indent_Level - 1;
-      add (Indent & "end " & the_Applet.Name & "_Applet.launch;" & NL);
 
-      return +ada_Source;
-   end translate_Applet;
+
+
+   --  function translate_Applet (the_Applet : in parser_Model.Unit.asl_Applet.view) return String
+   --  is
+   --     use type ada.Containers.Count_type;
+   --
+   --     ada_Source   : unbounded_String;
+   --     indent_Level : Natural := 0;
+   --
+   --
+   --     function Indent return String
+   --     is
+   --     begin
+   --        return +indent_Level * "   ";
+   --     end Indent;
+   --
+   --
+   --     procedure add (Fragment : in String)
+   --     is
+   --     begin
+   --        append (ada_Source, Fragment);
+   --     end add;
+   --
+   --
+   --     procedure new_Line
+   --     is
+   --     begin
+   --        append (ada_Source, NL);
+   --     end new_Line;
+   --
+   --
+   --  begin
+   --     if the_Applet.Context.Withs.Length > 0
+   --     then
+   --        add ("with");
+   --        new_Line;
+   --
+   --        for i in 1 .. Integer (the_Applet.Context.Withs.Length)
+   --        loop
+   --           declare
+   --              Length    : constant Natural := Integer (the_Applet.Context.Withs.Length);
+   --              unit_Name : constant String  := the_Applet.Context.Withs (i);
+   --           begin
+   --              if i = Length then add ("     " & unit_Name & ";" & NL);
+   --                            else add ("     " & unit_Name & ",");
+   --              end if;
+   --           end;
+   --        end loop;
+   --     end if;
+   --
+   --
+   --     new_Line;
+   --     new_Line;
+   --     add ("procedure " & the_Applet.Name & "_Applet.launch" & NL);
+   --     add ("is"                                              & NL);
+   --     add ("begin"                                           & NL);
+   --
+   --
+   --     translate_do_Block:
+   --     declare
+   --        --  do_Block : model.Statement.Block.view;
+   --     begin
+   --        indent_Level := indent_Level + 1;
+   --
+   --        add (Indent & "do_Block:" & NL);
+   --        add (Indent & "begin"     & NL);
+   --
+   --        indent_Level := indent_Level + 1;
+   --        translate_Statements (the_Applet.do_Block.Statements, indent_Level, ada_Source);
+   --        indent_Level := indent_Level - 1;
+   --
+   --        add (Indent & "end do_Block;" & NL);
+   --     end translate_do_Block;
+   --
+   --
+   --     indent_Level := indent_Level - 1;
+   --     add (Indent & "end " & the_Applet.Name & "_Applet.launch;" & NL);
+   --
+   --     return +ada_Source;
+   --  end translate_Applet;
 
 
 
@@ -564,9 +708,10 @@ is
 
 
 
-   function to_applet_spec_Ada_Source (Source : in String;   unit_Name : in String) return String
+   --  function to_applet_spec_Ada_Source (Source : in String;   unit_Name : in String) return String
+   function to_applet_spec_Ada_Source (the_Unit : in asl2ada.parser_Model.Unit.view;   unit_Name : in String) return String
    is
-      the_Unit   : constant asl2ada.parser_Model.Unit.view    := asl2ada.Parser.to_Unit (Source, unit_Name, Parser.Applet);
+      --  the_Unit   : constant asl2ada.parser_Model.Unit.view    := asl2ada.Parser.to_Unit (Source, unit_Name, Parser.Applet);
       the_Applet : constant parser_Model.Unit.asl_Applet.view := parser_Model.Unit.asl_Applet.view (the_Unit);
       ada_Source :          unbounded_String;
 
@@ -625,9 +770,10 @@ is
 
 
 
-   function to_applet_body_Ada_Source (Source : in String;   unit_Name : in String) return String
+   --  function to_applet_body_Ada_Source (Source : in String;   unit_Name : in String) return String
+   function to_applet_body_Ada_Source (the_Unit : in asl2ada.parser_Model.Unit.view;   unit_Name : in String) return String
    is
-      the_Unit   : constant asl2ada.parser_Model.Unit.view    := asl2ada.Parser.to_Unit (Source, unit_Name, Parser.Applet);
+      --  the_Unit   : constant asl2ada.parser_Model.Unit.view    := asl2ada.Parser.to_Unit (Source, unit_Name, Parser.Applet);
       the_Applet : constant parser_Model.Unit.asl_Applet.view := parser_Model.Unit.asl_Applet.view (the_Unit);
       ada_Source :          unbounded_String;
 
@@ -643,9 +789,11 @@ is
    begin
       --  dlog ("Translating '" & unit_Name & "' " & to_Lower (of_Kind'Image) & ".");
 
-      add_with_of_Asl_Ada_Core          (to_Source => ada_Source);
-      add_with_of_Gnat_formatted_String (to_Source => ada_Source);
-      add_with_of_Ada_Text_IO           (to_Source => ada_Source);
+      add_with_of_Asl_Ada_Core               (to_Source => ada_Source);
+      add_with_of_Gnat_formatted_String      (to_Source => ada_Source);
+      add_with_of_Ada_Text_IO                (to_Source => ada_Source);
+      add_with_of_Ada_unchecked_Deallocation (to_Source => ada_Source);
+      add_with_of_Ada_Exceptions             (to_Source => ada_Source);
 
       new_Line;
       new_Line;
@@ -668,6 +816,18 @@ is
       translate_Statements (the_Applet.do_Block.Statements, indent_Level, ada_Source);
       indent_Level := indent_Level - 1;
 
+
+      dlog (3);
+      dlog ("the_Applet.do_Block.Handlers count: " & the_Applet.do_Block.Handlers.Length'Image);
+
+      indent_Level := indent_Level + 1;
+      translate_Handlers (the_Applet.do_Block.Handlers,
+                          indent_Level,
+                          ada_Source);
+      indent_Level := indent_Level - 1;
+      dlog (3);
+
+
       add ("   end do_it;"                   & NL);
 
 
@@ -685,9 +845,10 @@ is
 
 
 
-   function to_applet_launch_Ada_Source (Source : in String;   unit_Name : in String) return String
+   --  function to_applet_launch_Ada_Source (Source : in String;   unit_Name : in String) return String
+   function to_applet_launch_Ada_Source (the_Unit : in asl2ada.parser_Model.Unit.view;   unit_Name : in String) return String
    is
-      the_Unit   : constant asl2ada.parser_Model.Unit.view := asl2ada.Parser.to_Unit (Source, unit_Name, Parser.Applet);
+      --  the_Unit   : constant asl2ada.parser_Model.Unit.view := asl2ada.Parser.to_Unit (Source, unit_Name, Parser.Applet);
       ada_Source :          unbounded_String;
 
       use type ada.Containers.Count_type;

@@ -1,6 +1,7 @@
 with
      asl2ada.Translator,
      asl2ada.Parser,
+     asl2ada.parser_Model.Unit,
      asl2ada.Token,
      asl2ada.Lexeme,
      asl2ada.Error,
@@ -148,12 +149,16 @@ begin
       when parser.Applet =>
          declare
             use lace.Text.Forge;
-            asl_Source : constant String := comment_stripped_Source (From => to_String (Filename (unit_Path)));
-
+            asl_Source : constant String                         := comment_stripped_Source (From => to_String (Filename (unit_Path)));
+            the_Unit   : constant asl2ada.parser_Model.Unit.view := asl2ada.Parser.to_Unit  (asl_Source,
+                                                                                             +unit_Name,
+                                                                                             Parser.Applet);
          begin
             do_applet_spec_Source:
             declare
-               ada_Source : constant String := asl2ada.Translator.to_applet_spec_Ada_Source (asl_Source,
+               --  ada_Source : constant String := asl2ada.Translator.to_applet_spec_Ada_Source (asl_Source,
+               --                                                                                unit_Name => +unit_Name);
+               ada_Source : constant String := asl2ada.Translator.to_applet_spec_Ada_Source (the_Unit,
                                                                                              unit_Name => +unit_Name);
             begin
                lace.Text.forge.store (Filename (output_Path & "/" & (+unit_Name) & "_applet.ads"),
@@ -163,7 +168,9 @@ begin
 
             do_applet_body_Source:
             declare
-               ada_Source : constant String := asl2ada.Translator.to_applet_body_Ada_Source (asl_Source,
+               --  ada_Source : constant String := asl2ada.Translator.to_applet_body_Ada_Source (asl_Source,
+               --                                                                                unit_Name => +unit_Name);
+               ada_Source : constant String := asl2ada.Translator.to_applet_body_Ada_Source (the_Unit,
                                                                                              unit_Name => +unit_Name);
             begin
                lace.Text.forge.store (Filename (output_Path & "/" & (+unit_Name) & "_applet.adb"),
@@ -173,7 +180,9 @@ begin
 
             do_applet_launch_Source:
             declare
-               ada_Source : constant String := asl2ada.Translator.to_applet_launch_Ada_Source (asl_Source,
+               --  ada_Source : constant String := asl2ada.Translator.to_applet_launch_Ada_Source (asl_Source,
+               --                                                                                  unit_Name => +unit_Name);
+               ada_Source : constant String := asl2ada.Translator.to_applet_launch_Ada_Source (the_Unit,
                                                                                                unit_Name => +unit_Name);
             begin
                lace.Text.forge.store (Filename (output_Path & "/" & (+unit_Name) & "_applet-launch.adb"),

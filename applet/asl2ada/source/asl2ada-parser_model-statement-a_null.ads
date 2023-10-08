@@ -10,6 +10,10 @@ is
    end Forge;
 
 
+   --  overriding
+   --  function Image (Self : in Item) return String;
+
+
 
 private
 
