@@ -378,33 +378,40 @@ is
                   raise_Statement : constant parser_Model.Statement.a_raise.view := new_raise_Statement (Raises => +Next.Identifier);
                begin
                   --  i := i + 3;     -- Skip Identifier and ';' tokens.
-                  i := i + 2;     -- Skip Identifier and ';' tokens.
+                  i := i + 2;     -- Skip Identifier token.
                   --  i := i + 1;
 
-                  --  while Current.Kind /= semicolon_Token
-                  while Current.Kind /= right_parenthesis_Token
-                  loop
-                     i := i + 3;
-                     --  i := i + 2;
+                  dlog (Current.Kind'Image);
 
-                     if Current.Kind = integer_literal_Token
-                     then
-                        dlog ("Adding integer literal value.");
-                        raise_Statement.add (Current.integer_Value'Image);
-                        i := i + 1;
+                  if Current.Kind = semicolon_Token
+                  then     -- Simple exception.
+                     null;
 
-                     elsif Current.Kind = character_literal_Token
-                     then
-                        dlog ("Adding character literal value.");
-                        raise_Statement.add (Current.character_Value'Image);
-                        i := i + 1;
+                  else     -- Extended exception.
+                     while Current.Kind /= right_parenthesis_Token
+                     loop
+                        i := i + 3;
+                        --  i := i + 2;
 
-                     else
-                        raise program_Error with "Unhandled token kind ~ '" & Current.Kind'Image & "'.";
-                     end if;
+                        if Current.Kind = integer_literal_Token
+                        then
+                           dlog ("Adding integer literal value.");
+                           raise_Statement.add (Current.integer_Value'Image);
+                           i := i + 1;
 
-                     dlog ("Current.Kind: " & Current.Kind'Image);
-                  end loop;
+                        elsif Current.Kind = character_literal_Token
+                        then
+                           dlog ("Adding character literal value.");
+                           raise_Statement.add (Current.character_Value'Image);
+                           i := i + 1;
+
+                        else
+                           raise program_Error with "Unhandled token kind ~ '" & Current.Kind'Image & "'.";
+                        end if;
+
+                        dlog ("Current.Kind: " & Current.Kind'Image);
+                     end loop;
+                  end if;
 
                   --  if Current.Kind /= semicolon_Token
                   --  then   -- Extended exception.
