@@ -520,13 +520,13 @@ is
       end next_next_next_Token;
 
 
-      function prior_is_not_a_Subprogram return Boolean
-      is
-      begin
-         return i > 1
-           and then (    From (i - 1).Kind /= function_Token
-                     and From (i - 1).Kind /= procedure_Token);
-      end prior_is_not_a_Subprogram;
+      --  function prior_is_not_a_Subprogram return Boolean
+      --  is
+      --  begin
+      --     return i > 1
+      --       and then (    From (i - 1).Kind /= function_Token
+      --                 and From (i - 1).Kind /= procedure_Token);
+      --  end prior_is_not_a_Subprogram;
 
 
    begin
@@ -644,6 +644,139 @@ is
 
       return Result;
    end to_applet_Tokens;
+
+
+
+
+
+   ----------------
+   --- Block Tokens
+   --
+
+   function to_block_Tokens (From : in Token.Vector) return block_Tokens
+   is
+      use asl2ada.Token,
+          ada.Strings.unbounded;
+
+      Result : block_Tokens;
+      i      : Positive    := 1;
+
+
+      function next_Token return Token.item
+      is
+      begin
+         if i > Integer (From.Length)
+         then
+            return (Kind => no_Token,
+                    others => <>);
+         end if;
+
+         return From (i);
+      end next_Token;
+
+
+      function next_next_Token return Token.item
+      is
+      begin
+         if i + 1 > Integer (From.Length)
+         then
+            return (Kind => no_Token,
+                    others => <>);
+         end if;
+
+         return From (i + 1);
+      end next_next_Token;
+
+
+      function next_next_next_Token return Token.item
+      is
+      begin
+         if i + 2 > Integer (From.Length)
+         then
+            return (Kind => no_Token,
+                    others => <>);
+         end if;
+
+         return From (i + 2);
+      end next_next_next_Token;
+
+
+      function prior_is_not_a_Subprogram return Boolean
+      is
+      begin
+         return i > 1
+           and then (    From (i - 1).Kind /= function_Token
+                     and From (i - 1).Kind /= procedure_Token);
+      end prior_is_not_a_Subprogram;
+
+
+   begin
+      -- Declarations tokens.
+      --
+      loop
+         exit when next_Token.Kind = begin_Token;
+           --  and    ((         next_next_Token.Kind       = identifier_Token
+           --           and then next_next_Token.Identifier = "open")
+           --          or        next_next_Token.Kind       = do_Token)
+           --  and          next_next_next_Token.Kind       = is_Token;
+
+         if next_Token.Kind /= is_Token
+         then
+            dlog ("lexer.to_block_Tokens ~ Adding token to Declarations: " & From.Element (i)'Image);
+            Result.Declarations.append (From (i));
+         end if;
+
+         i := i + 1;
+      end loop;
+
+      dlog (2);
+
+
+      i := i + 1;     -- Skip 'begin' token.
+
+
+      -- Statement tokens.
+      --
+      begin
+         --  i := i + 1;     -- Skip 'do' and 'is' tokens.
+
+         while i <= Integer (From.Length)
+         loop
+            exit when       next_Token.Kind = exception_Token;
+              --  and      next_next_Token.Kind = do_Token
+              --  and next_next_next_Token.Kind = semicolon_Token;
+
+            dlog ("lexer.to_block_Tokens ~ Adding token to Statements: " & From.Element (i)'Image);
+            Result.Statements.append (From (i));
+            i := i + 1;
+         end loop;
+      end;
+
+      dlog (2);
+
+      i := i + 1;     -- Skip 'exception' token.
+
+
+      -- Handler tokens.
+      --
+      --  declare
+      --     function "=" (Left, Right : String) return Boolean renames ada.Strings.Equal_case_insensitive;
+      begin
+         while i <= Integer (From.Length)
+         loop
+            exit when        next_Token.Kind            = end_Token;
+              --  and (          next_next_Token.Kind       = identifier_Token)
+                   --  and then +next_next_Token.Identifier = applet_Name);         -- Note the case insensitive equality operator.
+
+            dlog ("lexer.to_block_Tokens ~ Adding token to Handlers: " & From.Element (i)'Image);
+            Result.Handlers.append (From (i));
+            i := i + 1;
+         end loop;
+      end;
+
+
+      return Result;
+   end to_block_Tokens;
 
 
 end asl2ada.Lexer;

@@ -14,8 +14,8 @@ is
 
 
 
-   ------------------
-   --- Applet tokens.
+   -----------------
+   --- Applet tokens
    --
 
    type applet_Tokens is
@@ -30,6 +30,23 @@ is
 
    function to_applet_Tokens (From        : in Token.Vector;
                               applet_Name : in String) return applet_Tokens;
+
+
+
+
+   ----------------
+   --- Block Tokens
+   --
+
+   type block_Tokens is
+      record
+         Declarations : Token.Vector;
+         Statements   : Token.Vector;
+         Handlers     : Token.Vector;
+      end record;
+
+   function to_block_Tokens (From : in Token.Vector) return block_Tokens;
+
 
 
 end asl2ada.Lexer;
