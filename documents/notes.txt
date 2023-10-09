@@ -364,19 +364,6 @@ Loops
 
 
 
-____
-Misc
-~~~~
-
-- Comment token is '--'.
-- '~=' is used to denote case insensitive equality for Text and Strings.
-- Swap assignment:   A, B, C := C, A, B;
-- Parameterised 'Image attributes.
-- Redefine access types images using 'put_Image' to give the image of the de-referenced object.
-
-
-
-
 _____________
 Introspection
 ~~~~~~~~~~~~~
@@ -456,3 +443,19 @@ GPU Processing
 - Using openGL or Vulkan or openCL ?
 - ASL generates openGL shaders from ASL source code.
 - How to specify GPU code ?
+
+
+
+____
+Misc
+~~~~
+
+- Comment token is '--'.
+- '~=' is used to denote case insensitive equality for Characters, Glyphs, Text and Strings.
+- Swap assignment:   A, B, C := C, A, B;
+- Parameterised 'Image attributes.
+- Redefine access types images using 'put_Image' to give the image of the de-referenced object.
+- Instrumented code enabled and disabled with pragma's. Creates a log of each line of code just executed and variable values.
+
+
+
