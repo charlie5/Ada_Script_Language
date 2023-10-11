@@ -3,12 +3,16 @@ with
      asl2ada.Lexeme,
 
      asl2ada.parser_Model.Unit.asl_Applet,
+     asl2ada.parser_Model.Condition,
      asl2ada.parser_Model.Expression,
      asl2ada.parser_Model.Declaration.of_exception,
      asl2ada.parser_Model.Declaration.of_variable,
      asl2ada.parser_Model.Handler,
-     asl2ada.parser_Model.Statement.call,
+     asl2ada.parser_Model.Operator,
+     asl2ada.parser_Model.Statement.assignment,
      asl2ada.parser_Model.Statement.block,
+     asl2ada.parser_Model.Statement.call,
+     asl2ada.parser_Model.Statement.end_when,
      asl2ada.parser_Model.Statement.for_loop,
      asl2ada.parser_Model.Statement.a_null,
      asl2ada.parser_Model.Statement.a_raise,
@@ -69,6 +73,7 @@ is
 
 
 
+
    procedure add_with_of_Ada_Exceptions (to_Source : in out unbounded_String)
    is
    begin
@@ -76,6 +81,70 @@ is
               before   => 1,
               new_Item => "with ada.Exceptions;" & NL);
    end add_with_of_Ada_Exceptions;
+
+
+
+
+   procedure translate_Expression (the_Expression : in     parser_Model.Expression.view;
+                                   indent_Level   : in out Positive;
+                                   ada_Source     : in out uString)
+   is
+      --  use Token;
+
+      --  function  Indent      return String  is begin   return +indent_Level * "   ";    end Indent;
+      procedure add (Fragment : in String) is begin   append (ada_Source, Fragment);   end add;
+      --  procedure new_Line                   is begin   append (ada_Source, NL);         end new_Line;
+
+   begin
+      dlog;
+      dlog;
+      dlog ("Translating expression: " & the_Expression.all'Image);
+
+      add (the_Expression.to_String);
+   end translate_Expression;
+
+
+
+
+   procedure translate_Operator (the_Operator : in     parser_Model.Operator.view;
+                                 indent_Level : in out Positive;
+                                 ada_Source   : in out uString)
+   is
+      use Token;
+
+      --  function  Indent      return String  is begin   return +indent_Level * "   ";    end Indent;
+      procedure add (Fragment : in String) is begin   append (ada_Source, Fragment);   end add;
+      --  procedure new_Line                   is begin   append (ada_Source, NL);         end new_Line;
+
+   begin
+      dlog;
+      dlog;
+      dlog ("Translating operator: " & the_Operator.all'Image);
+
+      add (+the_Operator.Token.Lexeme.Text);
+   end translate_Operator;
+
+
+
+
+   procedure translate_Condition (the_Condition : in     parser_Model.Condition.view;
+                                  indent_Level  : in out Positive;
+                                  ada_Source    : in out uString)
+   is
+      use Token;
+
+      function  Indent      return String  is begin   return +indent_Level * "   ";    end Indent;
+      procedure add (Fragment : in String) is begin   append (ada_Source, Fragment);   end add;
+      procedure new_Line                   is begin   append (ada_Source, NL);         end new_Line;
+
+   begin
+      dlog ("Translating condition: " & the_Condition.all'Image);
+
+      translate_Expression (the_Condition.Left,     indent_Level, ada_Source);
+      translate_Operator   (the_Condition.Operator, indent_Level, ada_Source);
+      translate_Expression (the_Condition.Right,    indent_Level, ada_Source);
+   end translate_Condition;
+
 
 
 
@@ -103,6 +172,13 @@ is
                add (Variable.Identifier);
                add (" : ");
                add (Variable.my_Type);
+
+               if Variable.Initialiser /= ""
+               then
+                  add (" := ");
+                  add (Variable.Initialiser);
+               end if;
+
                add (";");
                new_Line;
             end;
@@ -285,6 +361,36 @@ is
                      add (");" & NL);
                   end if;
                end if;
+            end;
+
+
+         elsif Each.all in parser_Model.Statement.assignment.item'Class
+         then
+            declare
+               Assignment : constant parser_Model.Statement.assignment.view := parser_Model.Statement.assignment.view (Each);
+            begin
+               indent_Level := indent_Level + 1;
+               add (Indent & Assignment.Variable & " := ");
+               translate_Expression (Assignment.Expression, indent_Level, ada_Source);
+               add (";");
+               new_Line;
+               indent_Level := indent_Level - 1;
+            end;
+
+
+         elsif Each.all in parser_Model.Statement.end_when.item'Class
+         then
+            declare
+               end_When : constant parser_Model.Statement.end_when.view := parser_Model.Statement.end_when.view (Each);
+            begin
+               indent_Level := indent_Level + 1;
+               add (Indent & "exit when ");
+               translate_Condition (end_When.Condition,
+                                    indent_Level,
+                                    ada_Source);
+               --  add (";");
+               new_Line;
+               indent_Level := indent_Level - 1;
             end;
 
 
@@ -812,10 +918,21 @@ is
       add ("   is"                           & NL);
       add ("   begin"                        & NL);
 
+      if the_Applet.end_when_Found
+      then
+         indent_Level := indent_Level + 1;
+         add ("      loop" & NL);
+      end if;
+
       indent_Level := indent_Level + 1;
       translate_Statements (the_Applet.do_Block.Statements, indent_Level, ada_Source);
       indent_Level := indent_Level - 1;
 
+      if the_Applet.end_when_Found
+      then
+         indent_Level := indent_Level - 1;
+         add ("      end loop;" & NL);
+      end if;
 
       dlog (3);
       dlog ("the_Applet.do_Block.Handlers count: " & the_Applet.do_Block.Handlers.Length'Image);

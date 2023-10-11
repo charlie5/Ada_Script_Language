@@ -5,7 +5,7 @@ is
    package body Forge
    is
 
-      function new_Call_Statement (Name : in String) return View
+      function new_call_Statement (Name : in String) return View
       is
          Result : constant View := new Item;
       begin

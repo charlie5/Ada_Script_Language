@@ -34,12 +34,28 @@ is
 
 
 
+   function Initialiser (Self : in Item) return String
+   is
+   begin
+      return +Self.Initialiser;
+   end Initialiser;
+
+
+
 
    procedure Type_is (Self : in out Item;   Now : in String)
    is
    begin
       Self.my_Type := +Now;
    end Type_is;
+
+
+
+   procedure Initialiser_is (Self : in out Item;   Now : in String)
+   is
+   begin
+      Self.Initialiser := +Now;
+   end Initialiser_is;
 
 
 end asl2ada.parser_Model.Declaration.of_variable;

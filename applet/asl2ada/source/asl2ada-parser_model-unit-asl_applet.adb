@@ -24,4 +24,20 @@ is
    end do_Block;
 
 
+
+   procedure end_when_Found (Self : in out Item)
+   is
+   begin
+      Self.end_when_Found := True;
+   end end_when_Found;
+
+
+
+   function end_when_Found (Self : in Item) return Boolean
+   is
+   begin
+      return Self.end_when_Found;
+   end end_when_Found;
+
+
 end asl2ada.parser_Model.Unit.asl_Applet;

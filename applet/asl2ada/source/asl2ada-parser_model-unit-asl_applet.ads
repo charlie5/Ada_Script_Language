@@ -18,6 +18,9 @@ is
 
    function  do_Block         (Self : access Item)     return Statement.block.view;
 
+   procedure end_when_Found (Self : in out Item);
+   function  end_when_Found (Self : in     Item) return Boolean;
+
 
 
 private
@@ -25,11 +28,13 @@ private
    type Item is new Unit.item with
       record
          --  Context      : Token.Vector;
-         Declarations : parser_Model.Declaration.vector;
-         open_Block   : Statement.Block.view;
-         do_Block     : aliased Statement.Block.item;
-         close_Block  : Statement.Block.view;
-         Handlers     : Token.Vector;
+         Declarations   :         parser_Model.Declaration.vector;
+         open_Block     :         Statement.Block.view;
+         do_Block       : aliased Statement.Block.item;
+         close_Block    :         Statement.Block.view;
+         Handlers       :         Token.Vector;
+
+         end_when_Found :         Boolean := False;
       end record;
 
 

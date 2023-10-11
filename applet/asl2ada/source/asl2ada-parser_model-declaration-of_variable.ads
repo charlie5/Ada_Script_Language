@@ -19,10 +19,12 @@ is
    subtype Vector  is Vectors.Vector;
 
 
-   function  Identifier  (Self : in     Item) return String;
-   function  my_Type     (Self : in     Item) return String;
+   function  Identifier     (Self : in     Item) return String;
+   function  my_Type        (Self : in     Item) return String;
+   function  Initialiser    (Self : in     Item) return String;
 
-   procedure Type_is     (Self : in out Item;   Now : in String);
+   procedure Type_is        (Self : in out Item;   Now : in String);
+   procedure Initialiser_is (Self : in out Item;   Now : in String);
 
 
 
@@ -30,8 +32,9 @@ private
 
    type Item is new Declaration.item with
       record
-         Identifier : uString;
-         my_Type    : uString;
+         Identifier  : uString;
+         my_Type     : uString;
+         Initialiser :  uString;
       end record;
 
 

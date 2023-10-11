@@ -1,12 +1,16 @@
 with
      asl2ada.parser_Model.Unit.asl_Applet,
      asl2ada.parser_Model.Call,
+     asl2ada.parser_Model.Condition,
      asl2ada.parser_Model.Expression,
      asl2ada.parser_Model.Declaration.of_exception,
      asl2ada.parser_Model.Declaration.of_variable,
      asl2ada.parser_Model.Handler,
+     asl2ada.parser_Model.Operator,
+     asl2ada.parser_Model.Statement.assignment,
      asl2ada.parser_Model.Statement.block,
      asl2ada.parser_Model.Statement.call,
+     asl2ada.parser_Model.Statement.end_when,
      asl2ada.parser_Model.Statement.for_loop,
      asl2ada.parser_Model.Statement.a_null,
      asl2ada.parser_Model.Statement.a_raise,
@@ -110,7 +114,8 @@ is
       while i <= Integer (Tokens.Length)
       loop
          exit when    Current.Kind = comma_Token
-                   or Current.Kind = right_parenthesis_Token;
+                   or Current.Kind = right_parenthesis_Token
+                   or Current.Kind = semicolon_Token;
 
          Result.add (Token => Current);
          i := i + 1;
@@ -119,6 +124,41 @@ is
       return Result;
    end parse_Expression;
 
+
+
+
+   function parse_Operator (From : in Token.vector;   i : in out Positive) return parser_Model.Operator.view
+   is
+      Tokens :          Token.vector          renames From;
+      Result : constant parser_Model.Operator.view := new parser_Model.Operator.item;
+   begin
+      --  i := i + 1;
+      Result.Token_is (Tokens (i));
+      --  i := i + 1;
+
+      return Result;
+   end parse_Operator;
+
+
+
+
+   function parse_Condition (From : in     Token.vector;
+                             i    : in out Positive) return parser_Model.Condition.view
+   is
+      Tokens   : Token.vector                    renames From;
+      Result   : constant parser_Model.Condition.view := new parser_Model.Condition.item;
+
+      Left     : constant parser_Model.Expression.view := parse_Expression (From => Tokens, i => i);
+      Operator : constant parser_Model.Operator  .view := parse_Operator   (From => Tokens, i => i);
+      Right    : constant parser_Model.Expression.view := parse_Expression (From => Tokens, i => i);
+
+   begin
+      Result.Left_is     (Left);
+      Result.Operator_is (Operator);
+      Result.Right_is    (Right);
+
+      return Result;
+   end parse_Condition;
 
 
 
@@ -161,7 +201,7 @@ is
             if Current.Kind = identifier_Token
             then
                if Next (2).Kind = exception_Token
-               then
+               then     -- Is an exception declaration.
                   declare
                      use parser_Model.Declaration.of_exception.Forge;
                      the_Exception : constant parser_Model.Declaration.of_exception.view := new_exception_Declaration (Name => +Current.Identifier);
@@ -217,6 +257,14 @@ is
                      dlog (Current'Image);
 
                      Variable.Type_is (+Current.Identifier);
+
+                     i := i + 1;
+
+                     if Current.Kind = assignment_Token
+                     then
+                        i := i + 1;
+                        Variable.Initialiser_is (Current.integer_Value'Image);
+                     end if;
 
                      Result.append (parser_Model.Declaration.view (Variable));
                   end;
@@ -280,46 +328,61 @@ is
 
          begin
             if Current.Kind = identifier_Token
-            then     -- A subprogram call.
-               declare
-                  use parser_Model.Statement.Call.Forge;
-                  Call : constant parser_Model.Statement.Call.view := new_Call_Statement (Name => +Current.Identifier);
-               begin
-                  i := i + 1;
+            then                                        -- An assignment or a subprogram call.
+               if Next.Kind = assignment_Token
+               then     -- An assignment.
+                  declare
+                     use parser_Model.Statement.assignment.Forge;
+                     Assignment : constant parser_Model.Statement.assignment.view := new_assignment_Statement (Variable => +Current.Identifier);
+                  begin
+                     i := i + 2;     -- Skip ':='.
+                     Assignment.Expression_is (parse_Expression (From => Tokens,
+                                                                 i    => i));
+                     Result.append (parser_Model.Statement.view (Assignment));
+                     i := i + 0;
+                  end;
 
-                  if Current.Kind = left_parenthesis_Token
-                  then               -- Parse arguments.
-                     i := i + 1;     -- Skip left parenthesis.
+               else     -- A subprogram call.
+                  declare
+                     use parser_Model.Statement.Call.Forge;
+                     Call : constant parser_Model.Statement.Call.view := new_call_Statement (Name => +Current.Identifier);
+                  begin
+                     i := i + 1;
 
-                     loop
-                        if Current.Kind /= comma_Token
-                        then
-                           --  dlog ("add arg");
+                     if Current.Kind = left_parenthesis_Token
+                     then               -- Parse arguments.
+                        i := i + 1;     -- Skip left parenthesis.
 
-                           Call.add_Argument (parse_Expression (From => Tokens, i => i));
+                        loop
+                           if Current.Kind /= comma_Token
+                           then
+                              --  dlog ("add arg");
 
-                           --  if Current.Kind = string_literal_Token
-                           --  then
-                           --     Call.add_Argument ('"' & (+Current.string_Value) & '"');
-                           --
-                           --  else
-                           --     Call.add_Argument (+Current.Lexeme.Text);
-                           --  end if;
-                        end if;
+                              Call.add_Argument (parse_Expression (From => Tokens, i => i));
 
-                        --  i := i + 1;
-                        exit when Current.Kind = right_parenthesis_Token;
-                        i := i + 1;     -- Skip ';' token.
-                     end loop;
-                  end if;
+                              --  if Current.Kind = string_literal_Token
+                              --  then
+                              --     Call.add_Argument ('"' & (+Current.string_Value) & '"');
+                              --
+                              --  else
+                              --     Call.add_Argument (+Current.Lexeme.Text);
+                              --  end if;
+                           end if;
 
-                  i := i + 1;     -- Skip right parenthesis.
-                  i := i + 1;     -- Skip semicolon.
+                           --  i := i + 1;
+                           exit when Current.Kind = right_parenthesis_Token;
+                           i := i + 1;     -- Skip ';' token.
+                        end loop;
+                     end if;
 
-                  --  dlog ("Adding 'call' statement.");
-                  --  dlog (Call.all'Image);
-                  Result.append (parser_Model.Statement.view (Call));
-               end;
+                     i := i + 1;     -- Skip right parenthesis.
+                     i := i + 1;     -- Skip semicolon.
+
+                     --  dlog ("Adding 'call' statement.");
+                     --  dlog (Call.all'Image);
+                     Result.append (parser_Model.Statement.view (Call));
+                  end;
+               end if;
 
 
             elsif Current.Kind = for_Token
@@ -362,13 +425,35 @@ is
 
 
             elsif Current.Kind = end_Token
-            then     -- The end of statements.
-               --  dlog ("END KKK");
-               declare
-               begin
+            then
+               if Next.Kind = when_Token
+               then     -- An 'end when' statement.
+                  declare
+                     use parser_Model.Statement.end_when.Forge;
+
+                     end_when_Statement : constant parser_Model.Statement.end_when.view := new_end_when_Statement;
+                     the_Condition      :          parser_Model.Condition .view         := new parser_Model.Condition .item;
+                  begin
+                     i := i + 2;
+                     dlog ("END WHEN Current: " & (+Current.Identifier));
+
+
+                     the_Condition := parse_Condition (From => Tokens,
+                                                       i    => i);
+
+
+                     --  end_when_Statement.Condition_is (+Current.Identifier);
+                     end_when_Statement.Condition_is (the_Condition);
+
+                     Result.append (parser_Model.Statement.view (end_when_Statement));
+
+                     i := i + 1;
+                  end;
+
+               else     -- The end of statements.
                   i := i + 3;     -- Skip 'null' and ';' tokens.
                   exit;
-               end;
+               end if;
 
 
             elsif Current.Kind = raise_Token
@@ -546,10 +631,10 @@ is
       use type ada.Containers.Count_type;
 
       Errors        :          asl2ada.Error.items;
-      Errors_found  :          Boolean                            := False;
-      Tokens        : constant Token.vector                       := Lexer.to_Tokens (Source, Errors);
-      applet_Tokens : constant Lexer.applet_Tokens                := Lexer.to_applet_Tokens (Tokens, unit_Name);
-      Result        : constant asl2ada.parser_Model.Unit.asl_Applet.view := new asl2ada.parser_Model.Unit.asl_Applet.item;
+      Errors_found  :          Boolean                           := False;
+      Tokens        : constant Token.vector                      := Lexer.to_Tokens (Source, Errors);
+      applet_Tokens : constant Lexer.applet_Tokens               := Lexer.to_applet_Tokens (Tokens, unit_Name);
+      Result        : constant parser_Model.Unit.asl_Applet.view := new asl2ada.parser_Model.Unit.asl_Applet.item;
 
    begin
       dlog ("__________________________");
@@ -714,9 +799,32 @@ is
 
       parse_do_Block:
       declare
-         block_Tokens : lexer.block_Tokens := to_block_Tokens (applet_Tokens.do_Block);
-
+         block_Tokens   : constant lexer.block_Tokens := to_block_Tokens (applet_Tokens.do_Block);
       begin
+         find_End_When:
+         declare
+            Tokens : Token.vector renames block_Tokens.Statements;
+            Found  : Boolean           := False;
+         begin
+            for i in 1 .. Natural (Tokens.Length - 1)
+            loop
+               if    Tokens (i)    .Kind = end_Token
+                 and Tokens (i + 1).Kind = when_Token
+               then
+                  Found := True;
+                  dlog ("find_End_When is found !!!!!!!!!!!!!!!!!!!!!");
+                  exit;
+               end if;
+            end loop;
+
+            if Found
+            then
+               Result.end_when_Found;
+            end if;
+         end find_End_When;
+
+
+
          parse_block_Declarations:
          declare
             Tokens     : Token.vector renames block_Tokens.Declarations;

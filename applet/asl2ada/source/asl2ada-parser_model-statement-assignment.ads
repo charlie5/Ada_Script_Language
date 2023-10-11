@@ -3,7 +3,7 @@ with
      ada.Containers.Vectors;
 
 
-package asl2ada.parser_Model.Statement.call
+package asl2ada.parser_Model.Statement.assignment
 is
    --  type Kind is (Nil, Block, an_If, a_Loop, a_Goto, an_Exit, a_Null, subprogram_Call);
 
@@ -13,7 +13,7 @@ is
 
    package Forge
    is
-      function new_call_Statement (Name : in String) return View;
+      function new_assignment_Statement (Variable : in String) return View;
    end Forge;
 
 
@@ -21,10 +21,10 @@ is
    subtype Vector  is Vectors.Vector;
 
 
-   function  Name         (Self : in     Item) return String;
+   function  Variable      (Self : in     Item) return String;
 
-   procedure add_Argument (Self : in out Item;   Argument : in Expression.view);
-   function  Arguments    (Self : in     Item)          return Expression.vector;
+   procedure Expression_is (Self : in out Item;   Now : in Expression.view);
+   function  Expression    (Self : in     Item)     return Expression.view;
 
 
 
@@ -32,9 +32,9 @@ private
 
    type Item is new Statement.item with
       record
-         Name      : uString;
-         Arguments : Expression.vector;
+         Variable   : uString;
+         Expression : parser_Model.Expression.view;
       end record;
 
 
-end asl2ada.parser_Model.Statement.call;
+end asl2ada.parser_Model.Statement.assignment;
