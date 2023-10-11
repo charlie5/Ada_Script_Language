@@ -404,6 +404,9 @@ Versioning
 
 - Official libraries will not be versioned.
 - Each new release of ASL will not be published until all official libraries are consistent.
+- Versions: Old ~ prior              stable version.
+            Now ~ current            stable version.
+            New ~ candidate for next stable version.
 
 
 
