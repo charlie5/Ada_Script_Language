@@ -21,7 +21,8 @@ private
 
    type Item is tagged
       record
-         Queue : Job_list;
+         Queue   : Job_list;
+         Pending : Job_list;
       end record;
 
 

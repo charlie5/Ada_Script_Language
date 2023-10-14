@@ -4,7 +4,7 @@ is
    procedure add (Self : in out Item;   new_Job : in Job.view)
    is
    begin
-      Self.Queue.append (new_Job);
+      Self.Pending.append (new_Job);
    end add;
 
 
@@ -12,7 +12,7 @@ is
    procedure evolve (Self : in out Item)
    is
    begin
-      --- Sort the queue into 'Due' time order.
+      --- Sort the pending queue into 'Due' time order.
       --
       declare
          function "<" (Left, Right : in Job.view) return Boolean
@@ -23,7 +23,37 @@ is
 
          package Sorter is new Job_lists.generic_Sorting;
       begin
-         Sorter.sort (Self.Queue);
+         Sorter.sort (Self.Pending);
+      end;
+
+
+      --- Move the pending jobs into 'Queue', in time order.
+      --
+      declare
+         use Job_lists;
+         queue_Cursor   : Job_lists.Cursor := Self.Queue  .First;
+         pending_Cursor : Job_lists.Cursor := Self.Pending.First;
+      begin
+         while has_Element (pending_Cursor)
+         loop
+            if not has_Element (queue_Cursor)
+            then
+               Self.Queue.append (Element (pending_Cursor));
+               Self.Pending.delete_First;
+               pending_Cursor := Self.Pending.First;
+               queue_Cursor   := Self.Queue.First;
+
+            elsif Element (pending_Cursor).Due < Element (queue_Cursor).Due
+            then
+               Self.Queue.insert (before   => queue_Cursor,
+                                  new_Item => Element (pending_Cursor));
+               Self.Pending.delete_First;
+               pending_Cursor := Self.Pending.First;
+
+            else
+               next (queue_Cursor);
+            end if;
+         end loop;
       end;
 
 
@@ -43,10 +73,11 @@ is
                if the_Job.Due <= Now
                then
                   the_Job.perform;
+                  Self.Queue.delete (Cursor);
 
-                  if the_Job.Due = Never
+                  if the_Job.Due /= Never
                   then
-                     Self.Queue.delete (Cursor);
+                     Self.add (the_Job);
                   end if;
 
                else
