@@ -71,7 +71,7 @@ Stacks:
 
 
 Lists:
--
+- Use 'ada.Containers.doubly_linked_Lists'.
 -
 -
 
@@ -459,6 +459,6 @@ Misc
 - Parameterised 'Image attributes.
 - Redefine access types images using 'put_Image' to give the image of the de-referenced object.
 - Instrumented code enabled and disabled with pragma's. Creates a log of each line of code just executed and variable values.
-
+- Allow 'String' as argument to a case statement. Use an indefinite map with String aas key and 'access procedure' as value.
 
 
